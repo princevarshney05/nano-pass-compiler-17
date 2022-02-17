@@ -51,14 +51,19 @@
 ;; HW1 Passes
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; environment contains mapping between 
 (define (uniquify-exp env)
   (lambda (e)
     (match e
-      [(Var x)
-       (error "TODO: code goes here (uniquify-exp, symbol?)")]
+      [(Var x) ; Variable exists, but we need a one to one mapping from dictionary
+        (Var (dict-ref env x))
+       ]
       [(Int n) (Int n)]
       [(Let x e body)
-       (error "TODO: code goes here (uniquify-exp, let)")]
+        (let ([newenv (dict-set env x (gensym))])
+          (Let (dict-ref newenv x) ((uniquify-exp env) e) ((uniquify-exp newenv) body))
+        )
+      ]
       [(Prim op es)
        (Prim op (for/list ([e es]) ((uniquify-exp env) e)))])))
 

@@ -1,0 +1,11 @@
+((uniquify-exp '()) (Let 'y (Int 10) (Var 'y)))
+(Let 'y (Int 10) (Prim '- (Var 'y)))
+
+
+((uniquify-exp '()) (Let 'x (Int 5) (Let 'y (Let 'x 6 (Var 'x)) (Var 'x)) ))
+((uniquify-exp '()) (Let 'x (Int 5) (Var 'x)) ))
+((uniquify-exp '()) (Let 'x (Int 5) (Let 'y (Let 'x (Int 6) (Var 'x)) (Var 'x)) ))
+
+
+(let ([x 5]) (let ([y y]) y))
+(let ([x 5] [y 8]) (let ([y y]) y))
