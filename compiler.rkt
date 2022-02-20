@@ -77,8 +77,34 @@
   (error "TODO: code goes here (remove-complex-opera*)"))
 
 ;; explicate-control : R1 -> C0
+
+(define (explicate_tail e)
+  (match e
+    [(Var x) (values (Return (Var x)) '())]
+    [(Int n) (values (Return (Int n)) '())]
+    [(Let x rhs body) (let*-values ([(intmd-seq1 intmd-vars1) (explicate_tail body)]
+                                    [(intmd-seq2 intmd-vars2) (explicate_assign rhs x intmd-seq1)])
+                                    (values intmd-seq2 (append intmd-vars1 intmd-vars2 '(x))) )]
+    [(Prim '- (list atom)) (values (Return (Prim '- (list atom))) '())]
+    [(Prim '+ (list atom1 atom2)) (values (Return (Prim '+ (list atom1 atom2))) '())]
+    [else (error "explicate_tail unhandled case" e)]))
+
+
+(define (explicate_assign e x cont)
+  (match e
+    [(Var y) (values (Seq (Assign (Var x) (Var y)) cont) '())]
+    [(Int n) (values (Seq (Assign (Var x) (Int n)) cont) '())]
+    [(Let y rhs body) (let*-values ([(intmd-seq1 intmd-vars1) (explicate_assign body x cont)]
+                                    [(intmd-seq2 intmd-vars2) (explicate_assign rhs y intmd-seq1)])
+                                    (values intmd-seq2 (append intmd-vars1 intmd-vars2 '(y))))]
+    [(Prim '- (list atom)) (values (Seq (Assign (Var x) (Prim '- (list atom))) cont) '())]
+    [(Prim '+ (list atom1 atom2)) (values (Seq (Assign (Var x) (Prim '+  (list atom1 atom2))) cont) '())]
+    [else (error "explicate_assign unhandled case" e)]))
+    
 (define (explicate-control p)
-  (error "TODO: code goes here (explicate-control)"))
+  (match p
+    [(Program info body) (let-values ([(intmd-seq intmd-vars) (explicate_tail body)]) 
+                                     (Program intmd-vars intmd-seq))]))
 
 ;; select-instructions : C0 -> pseudo-x86
 (define (select-instructions p)
