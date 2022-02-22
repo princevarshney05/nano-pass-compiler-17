@@ -46,9 +46,10 @@
 
 
 
-(explicate_tail (parse-exp '(let ([x (let ([y (- 42)]) y) ]) (- x))))
+; (explicate_tail (parse-exp '(let ([x (let ([y (- 42)]) y) ]) (- x))))
 
 ;; (Seq (Assign (Var 'y) (Prim '- (list (Int 42)))) (Seq (Assign (Var 'x) (Var 'y)) (Return (Prim '- (list (Var 'x))))))
 
 ;; (explicate_tail (parse-exp '(let ([x 10]) x)))
 
+(explicate_tail (parse-exp '(let ([x 41]) (+ x 1))))
