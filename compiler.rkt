@@ -171,20 +171,46 @@
     [(Prim '- (list atom)) (values (Seq (Assign (Var x) (Prim '- (list atom))) cont) '())]
     [(Prim '+ (list atom1 atom2)) (values (Seq (Assign (Var x) (Prim '+  (list atom1 atom2))) cont) '())]
     [else (error "explicate_assign unhandled case" e)]))
-    
+  
 (define (explicate-control p)
   (match p
     [(Program info body) (let-values ([(intmd-seq intmd-vars) (explicate_tail body)]) 
-                                    ; (CProgram intmd-vars `((start . ,intmd-seq))))]))
-                                    (CProgram (dict-set #hash() 'var intmd-vars) `((start . ,intmd-seq))))]))
+                                    (CProgram (dict-set #hash() 'locals intmd-vars) `((start . ,intmd-seq))))]))
 
 ;; select-instructions : C0 -> pseudo-x86
 (define (select-instructions p)
   (error "TODO: code goes here (select-instructions)"))
 
 ;; assign-homes : pseudo-x86 -> pseudo-x86
+
+(define (create-env lst offset)
+  (match lst
+  ['() #hash()]
+  [(cons x y) (dict-set (create-env y (- offset 8)) x (Deref 'rbp offset))]))
+
+(define (arg->memory arg env)
+  (match arg
+  [(Var x) (dict-ref env x)]
+  [(Imm i) (Imm i)]))
+
+(define (map-instr env instr)
+  (match instr
+  [(Instr op lst) (Instr op (for/list ([e lst]) (arg->memory e env)))]))
+
+(define (map-instrs env lst)
+  (match lst
+  ['() '()]
+  [(cons x y) (cons (map-instr env x) (map-instrs env y))]))
+
 (define (assign-homes p)
-  (error "TODO: code goes here (assign-homes)"))
+  (match p
+  [(Program info body) (X86Program info (match body
+                                          [`((,label . ,block))
+                                            (match block
+                                            [(Block info instrs) 
+                                            `((,label . ,(Block info (map-instrs (create-env (dict-ref info 'locals) -8) instrs))))
+                                            ]) 
+                                          ]))]))
 
 ;; patch-instructions : psuedo-x86 -> x86
 (define (patch-instructions p)

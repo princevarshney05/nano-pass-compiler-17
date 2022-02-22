@@ -52,4 +52,13 @@
 
 ;; (explicate_tail (parse-exp '(let ([x 10]) x)))
 
-(explicate_tail (parse-exp '(let ([x 41]) (+ x 1))))
+;; (explicate_tail (parse-exp '(let ([x 41]) (+ x 1))))
+
+
+
+
+
+(map-instrs (create-env '(x temp) -8) 
+              (list 
+              (Instr 'addq (list (Imm 10) (Var 'x))) 
+              (Instr 'movq (list (Var 'x) (Var 'temp)))))
