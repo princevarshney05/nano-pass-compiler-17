@@ -4,6 +4,7 @@
 (require "interp-Lint.rkt")
 (require "interp-Lvar.rkt")
 (require "interp-Cvar.rkt")
+(require "interp.rkt")
 (require "utilities.rkt")
 (provide (all-defined-out))
 
@@ -104,6 +105,13 @@
         
         (values (Var key) combined-list-env)
       ]
+      [
+        (Prim 'read '())
+        (define key (gensym))
+        (define new-exp (Prim 'read '()))
+        (define new-key-val-list (list (list key new-exp)))
+        (values (Var key) new-key-val-list )
+      ]
 
     )
   )
@@ -133,10 +141,14 @@
         (define combined-list-env (append a-list-env b-list-env))
         (normalise-env-exp combined-list-env new-exp)
       ]
-      [(Prim '+ (list a)) 
+      [(Prim '- (list a)) 
         (define-values (a-atom a-list-env) (rco-atom a))
         (define new-exp (Prim '- (list a-atom)))
         (normalise-env-exp a-list-env new-exp)
+      ]
+      [
+        (Prim 'read '())
+        (Prim 'read '())
       ]
     )
   )
@@ -176,11 +188,62 @@
   (match p
     [(Program info body) (let-values ([(intmd-seq intmd-vars) (explicate_tail body)]) 
                                     ; (CProgram intmd-vars `((start . ,intmd-seq))))]))
-                                    (CProgram (dict-set #hash() 'var intmd-vars) `((start . ,intmd-seq))))]))
+                                    (CProgram (dict-set #hash() 'locals intmd-vars) `((start . ,intmd-seq))))]))
+
+(define (int-to-imm e)
+  (match e
+    [(Int a) (Imm a)]
+    [(Var a) (Var a)]
+  )
+)
+
+(define (instruction-to-x86 e)
+  (match e 
+    [(Assign var (Prim '+ (list a b)))
+      (list 
+        (Instr 'movq (list (int-to-imm a) var))
+        (Instr 'addq (list (int-to-imm b) var))
+      )
+    ]
+    [(Assign var (Prim '- (list a)))
+      (list 
+        (Instr 'movq (list (int-to-imm a) var))
+        (Instr 'negq (list var))
+      )
+    ]
+    [(Assign var (Prim 'read '()))
+      (cons (Callq 'read_int ) 
+        (if (equal? var (Reg 'rax)) 
+          '() 
+          (list (Instr 'movq (list (Reg 'rax) var)))))
+    ]
+    [(Assign var var2)
+      (if (equal? var var2) '()
+        (list (Instr 'movq (list (int-to-imm var2) var))))]
+  ))
+
+(define (resolve-select-instructions e)
+  (match e
+    [(Seq instr rest-seq) 
+      (append (instruction-to-x86 instr) (resolve-select-instructions rest-seq))
+    ]
+    [(Return e)
+      (define instr (Assign (Reg 'rax) e))
+      (append (instruction-to-x86 instr) (list (Jmp 'conclusion)))
+    ]
+    )
+)
 
 ;; select-instructions : C0 -> pseudo-x86
 (define (select-instructions p)
-  (error "TODO: code goes here (select-instructions)"))
+  (match p
+    [
+      (CProgram info body)
+      (let ([frame-1 (car body)]) 
+        (X86Program info (list  (cons (car frame-1) (Block info (resolve-select-instructions (cdr frame-1))))  ) )
+      )
+    ])
+  )
 
 ;; assign-homes : pseudo-x86 -> pseudo-x86
 (define (assign-homes p)
@@ -202,7 +265,7 @@
      ;; Uncomment the following passes as you finish them.
      ("remove complex opera*" ,remove-complex-opera* ,interp-Lvar)
      ("explicate control" ,explicate-control ,interp-Cvar)
-     ;; ("instruction selection" ,select-instructions ,interp-x86-0)
+     ("instruction selection" ,select-instructions ,interp-x86-0)
      ;; ("assign homes" ,assign-homes ,interp-x86-0)
      ;; ("patch instructions" ,patch-instructions ,interp-x86-0)
      ;; ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-0)
