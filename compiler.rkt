@@ -72,9 +72,79 @@
   (match p
     [(Program info e) (Program info ((uniquify-exp '()) e))]))
 
+(define (rco-atom e) 
+    (
+      match e
+      [(Int n) (values (Int n) '())]
+      [(Var x) (values (Var x) '())]
+      [(Let key val body)
+        (define-values (body-atom body-env) (rco-atom body))
+        (values body-atom (append (list key (rco-exp val)) body-env ))
+      ]
+      [ (Prim '+ (list a b)) 
+        (define-values (a-atom a-list-env) (rco-atom a))
+        (define-values (b-atom b-list-env) (rco-atom b))
+        (define key (gensym))
+
+        (define new-exp (Prim '+ (list a-atom b-atom)))
+        (define new-key-val-list (list (list key new-exp)))
+        (define combined-list-env (append a-list-env b-list-env new-key-val-list))
+        
+        ; (values (Var key) (list (list key (normalise-env-exp combined-list-env new-exp))))
+        (values (Var key) combined-list-env)
+      ]
+      [ (Prim '- (list a)) 
+        (define-values (a-atom a-list-env) (rco-atom a))
+        (define key (gensym))
+
+        (define new-exp (Prim '- (list a-atom)))
+        (define new-key-val-list (list (list key new-exp)))
+        (define combined-list-env (append a-list-env new-key-val-list))
+        
+        (values (Var key) combined-list-env)
+      ]
+
+    )
+  )
+
+(define (normalise-env-exp env exp)
+  (match env
+    ['() exp]
+    ; [(list (list key val)) exp]
+    [`(,(list key val) . ,rest-list)
+      (Let key val (normalise-env-exp rest-list exp))
+    ] 
+    ))
+
+
+(define (rco-exp e) 
+    (
+      match e
+      [(Int n) (Int n)]
+      [(Var x) (Var x)]
+      [(Let key val body)
+        (Let key (rco-exp val) (rco-exp body))
+      ]
+      [(Prim '+ (list a b)) 
+        (define-values (a-atom a-list-env) (rco-atom a))
+        (define-values (b-atom b-list-env) (rco-atom b))
+        (define new-exp (Prim '+ (list a-atom b-atom)))
+        (define combined-list-env (append a-list-env b-list-env))
+        (normalise-env-exp combined-list-env new-exp)
+      ]
+      [(Prim '+ (list a)) 
+        (define-values (a-atom a-list-env) (rco-atom a))
+        (define new-exp (Prim '- (list a-atom)))
+        (normalise-env-exp a-list-env new-exp)
+      ]
+    )
+  )
+
 ;; remove-complex-opera* : R1 -> R1
 (define (remove-complex-opera* p)
-  (error "TODO: code goes here (remove-complex-opera*)"))
+  (match p
+    [(Program info e) (Program info (rco-exp  e))]
+  ))
 
 ;; explicate-control : R1 -> C0
 (define (explicate-control p)
@@ -102,7 +172,7 @@
 (define compiler-passes
   `( ("uniquify" ,uniquify ,interp-Lvar)
      ;; Uncomment the following passes as you finish them.
-     ;; ("remove complex opera*" ,remove-complex-opera* ,interp-Lvar)
+     ("remove complex opera*" ,remove-complex-opera* ,interp-Lvar)
      ;; ("explicate control" ,explicate-control ,interp-Cvar)
      ;; ("instruction selection" ,select-instructions ,interp-x86-0)
      ;; ("assign homes" ,assign-homes ,interp-x86-0)
