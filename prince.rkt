@@ -58,7 +58,12 @@
 
 
 
-(map-instrs (create-env '(x temp) -8) 
-              (list 
-              (Instr 'addq (list (Imm 10) (Var 'x))) 
-              (Instr 'movq (list (Var 'x) (Var 'temp)))))
+; (map-instrs (create-env '(x temp) -8) 
+;               (list 
+;               (Instr 'addq (list (Imm 10) (Var 'x))) 
+;               (Instr 'movq (list (Var 'x) (Var 'temp)))))
+
+; (explicate_tail (parse-exp '(read)))
+
+(rco-exp (parse-exp '(let ([x (read)]) x)))
+(rco-exp (parse-exp '(read)))
