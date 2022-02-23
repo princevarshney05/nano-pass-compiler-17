@@ -296,14 +296,48 @@
   [(X86Program info body) (X86Program info (match body
                                           [`((,label . ,block))
                                             (match block
-                                            [(Block info instrs) 
-                                            `((,label . ,(Block info (patch-instrs instrs))))
-                                            ]) 
+                                              [(Block info instrs) 
+                                              `((,label . ,(Block info (patch-instrs instrs))))
+                                              ]) 
                                           ]))]))
+
+(define (generate-main body offset) 
+  (dict-set body 'main 
+    (
+      Block '()
+      (list  
+        (Instr 'pushq (list (Reg 'rbp))) 
+        (Instr 'movq (list (Reg 'rsp) (Reg 'rbp))) 
+        (Instr 'subq (list (Imm offset) (Reg 'rsp))) 
+        (Jmp 'start) )
+    )
+  )
+)
+
+(define (generate-conclusion body offset) 
+  (dict-set body 'conclusion 
+    (Block '()
+      (list 
+        (Instr 'addq (list (Imm offset) (Reg 'rsp))) 
+        (Instr 'popq (list (Reg 'rbp))) 
+        (Retq))
+      )
+  )
+)
 
 ;; prelude-and-conclusion : x86 -> x86
 (define (prelude-and-conclusion p)
-  (error "TODO: code goes here (prelude-and-conclusion)"))
+(match p
+  [(X86Program info body) 
+    (define var-list (match (dict-ref body 'start)
+      [
+        (Block info body-2) (dict-ref info 'locals)
+      ])) 
+    (define offset (+ 16 (* 8 (length var-list))))
+    (define body-with-main (generate-main body offset))
+    (define body-complete (generate-conclusion body-with-main offset))
+    (X86Program info body-complete) 
+  ]))
 
 ;; Define the compiler passes to be used by interp-tests and the grader
 ;; Note that your compiler file (the file that defines the passes)
@@ -316,6 +350,6 @@
      ("instruction selection" ,select-instructions ,interp-x86-0)
      ("assign homes" ,assign-homes ,interp-x86-0)
      ("patch instructions" ,patch-instructions ,interp-x86-0)
-     ;; ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-0)
+     ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-0)
      ))
 
