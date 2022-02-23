@@ -65,5 +65,7 @@
 
 ; (explicate_tail (parse-exp '(read)))
 
-(rco-exp (parse-exp '(let ([x (read)]) x)))
-(rco-exp (parse-exp '(read)))
+; (rco-exp (parse-exp '(let ([x (read)]) x)))
+; (rco-exp (parse-exp '(read)))
+
+(parse-exp '(+ (+ (+ 42 (- 10)) 15) 23))
