@@ -325,6 +325,9 @@
   )
 )
 
+(define (mult-16 n)
+  (if (= (modulo n 16) 0) n (mult-16 (add1 n))))
+
 ;; prelude-and-conclusion : x86 -> x86
 (define (prelude-and-conclusion p)
 (match p
@@ -333,7 +336,8 @@
       [
         (Block info body-2) (dict-ref info 'locals)
       ])) 
-    (define offset (+ 16 (* 8 (length var-list))))
+    ;(define offset (* 8 (length var-list)))
+    (define offset (mult-16 (* 8 (length var-list))))
     (define body-with-main (generate-main body offset))
     (define body-complete (generate-conclusion body-with-main offset))
     (X86Program info body-complete) 
