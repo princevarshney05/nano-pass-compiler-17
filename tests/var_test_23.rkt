@@ -1,3 +1,4 @@
+; test-3 slect-instructions
 (let ([x 5])
   (+ 1
      (+ (read)
