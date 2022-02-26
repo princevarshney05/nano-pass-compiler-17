@@ -81,7 +81,7 @@
       [(Var x) (values (Var x) '())]
       [(Let key val body)
         (define-values (body-atom body-env) (rco-atom body))
-        (values body-atom (append (list key (rco-exp val)) body-env ))
+        (values body-atom (cons (list key (rco-exp val)) body-env ))
       ]
       [ (Prim '+ (list a b)) 
         (define-values (a-atom a-list-env) (rco-atom a))
