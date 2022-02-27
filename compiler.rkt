@@ -343,11 +343,45 @@
     (X86Program info body-complete) 
   ]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Bonus
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (pe_neg r)
+  (match r
+    [(Int n) (Int (fx- 0 n))]
+    [else (Prim '- (list r))]))
+
+(define (pe_add r1 r2)
+  (match* (r1 r2)
+    [((Int n1) (Int n2)) (Int (fx+ n1 n2))]
+    [(_ _) (Prim '+ (list r1 r2))]))
+
+(define (pe_sub r1 r2)
+  (match* (r1 r2)
+    [((Int n1) (Int n2)) (Int (fx- n1 n2))]
+    [(_ _) (Prim '- (list r1 r2))]))
+
+(define (pe_exp e)
+  (match e
+    [(Int n) (Int n)]
+    [(Var x) (Var x)]
+    [(Prim 'read '()) (Prim 'read '())]
+    [(Prim '- (list e1)) (pe_neg (pe_exp e1))]
+    [(Prim '+ (list e1 e2)) (pe_add (pe_exp e1) (pe_exp e2))]
+    [(Prim '- (list e1 e2)) (pe_sub (pe_exp e1) (pe_exp e2))]
+    [(Let x e1 e2) (Let x (pe_exp e1) (pe_exp e2))]))
+
+
+(define (pe_Lvar p)
+  (match p
+    [(Program '() e) (Program '() (pe_exp e))]))
+
 ;; Define the compiler passes to be used by interp-tests and the grader
 ;; Note that your compiler file (the file that defines the passes)
 ;; must be named "compiler.rkt"
 (define compiler-passes
-  `( ("uniquify" ,uniquify ,interp-Lvar)
+  `(  ("patial evaluator Lvar" ,pe_Lvar ,interp-Lvar)
+      ("uniquify" ,uniquify ,interp-Lvar)
      ;; Uncomment the following passes as you finish them.
      ("remove complex opera*" ,remove-complex-opera* ,interp-Lvar)
      ("explicate control" ,explicate-control ,interp-Cvar)
