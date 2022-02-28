@@ -382,6 +382,7 @@
     [(Prim 'read '()) (Prim 'read '())]
     [(Prim '- (list e1)) (pe_neg (pe_intelligent_exp e1))]
     [(Prim '+ (list (Int e1) (Prim '+ (list (Int e2) e3)))) (pe_add (pe_add (Int e1) (Int e2)) (pe_intelligent_exp e3))]
+    [(Prim '+ (list (Prim '+ (list (Int e1) e2)) (Prim '+ (list (Int e3) e4)))) (pe_add (pe_add (Int e1) (Int e3)) (pe_add (pe_intelligent_exp e2) (pe_intelligent_exp e4)))]
     [(Prim '+ (list e1 e2)) (pe_add (pe_intelligent_exp e1) (pe_intelligent_exp e2))]
     [(Let x e1 e2) (Let x (pe_intelligent_exp e1) (pe_intelligent_exp e2))]))
 
