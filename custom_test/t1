@@ -1,0 +1,22 @@
+((uniquify-exp '()) (Let 'y (Int 10) (Var 'y)))
+(Let 'y (Int 10) (Prim '- (Var 'y)))
+
+
+((uniquify-exp '()) (Let 'x (Int 5) (Let 'y (Let 'x 6 (Var 'x)) (Var 'x)) ))
+((uniquify-exp '()) (Let 'x (Int 5) (Var 'x)) ))
+((uniquify-exp '()) (Let 'x (Int 5) (Let 'y (Let 'x (Int 6) (Var 'x)) (Var 'x)) ))
+
+
+(let ([x 5]) (let ([y y]) y))
+(let ([x 5] [y 8]) (let ([y y]) y))
+
+(normalise-env-exp (list  (list  'x  (Int 5)) (list 'y (Int 6) )) (Var 'x))
+(normalise-env-exp (list  (list  'x  (Int 5)) (list 'y (Int 6) )) (Var 'x))
+
+
+(rco-exp (Let 'x (Prim '+ (Int 5) (Int 6)) (Var 'x)))
+
+(rco-exp (Let 'x (Prim '+ (list (Int 5) (Int 6))) (Var 'x)))
+(rco-exp (Prim '+ (list (Prim '+ (list (Int 5) (Int 6))) (Int 7))))
+(rco-exp (Prim '+ (list (Prim '+ (list (Int 5) (Int 6))) (Prim '- (list (Int 9))))))
+(rco-exp (Prim '+ (list (Prim '+ (list (Int 5) (Int 6))) (Prim '- (list (Prim '+ (list (Prim '+ (list (Int 1) (Int 3))) (Prim '- (list (Int 4)))))))))) 

@@ -3,6 +3,8 @@
 (require racket/fixnum)
 (require "interp-Lint.rkt")
 (require "interp-Lvar.rkt")
+(require "interp-Cvar.rkt")
+(require "interp.rkt")
 (require "utilities.rkt")
 (provide (all-defined-out))
 
@@ -51,14 +53,19 @@
 ;; HW1 Passes
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; environment contains mapping between 
 (define (uniquify-exp env)
   (lambda (e)
     (match e
-      [(Var x)
-       (error "TODO: code goes here (uniquify-exp, symbol?)")]
+      [(Var x) ; Variable exists, but we need a one to one mapping from dictionary
+        (Var (dict-ref env x))
+       ]
       [(Int n) (Int n)]
       [(Let x e body)
-       (error "TODO: code goes here (uniquify-exp, let)")]
+        (let ([newenv (dict-set env x (gensym))])
+          (Let (dict-ref newenv x) ((uniquify-exp env) e) ((uniquify-exp newenv) body))
+        )
+      ]
       [(Prim op es)
        (Prim op (for/list ([e es]) ((uniquify-exp env) e)))])))
 
@@ -67,41 +74,320 @@
   (match p
     [(Program info e) (Program info ((uniquify-exp '()) e))]))
 
+(define (rco-atom e) 
+    (
+      match e
+      [(Int n) (values (Int n) '())]
+      [(Var x) (values (Var x) '())]
+      [(Let key val body)
+        (define-values (body-atom body-env) (rco-atom body))
+        (values body-atom (cons (list key (rco-exp val)) body-env ))
+      ]
+      [ (Prim '+ (list a b)) 
+        (define-values (a-atom a-list-env) (rco-atom a))
+        (define-values (b-atom b-list-env) (rco-atom b))
+        (define key (gensym))
+
+        (define new-exp (Prim '+ (list a-atom b-atom)))
+        (define new-key-val-list (list (list key new-exp)))
+        (define combined-list-env (append a-list-env b-list-env new-key-val-list))
+        
+        ; (values (Var key) (list (list key (normalise-env-exp combined-list-env new-exp))))
+        (values (Var key) combined-list-env)
+      ]
+      [ (Prim '- (list a)) 
+        (define-values (a-atom a-list-env) (rco-atom a))
+        (define key (gensym))
+
+        (define new-exp (Prim '- (list a-atom)))
+        (define new-key-val-list (list (list key new-exp)))
+        (define combined-list-env (append a-list-env new-key-val-list))
+        
+        (values (Var key) combined-list-env)
+      ]
+      [
+        (Prim 'read '())
+        (define key (gensym))
+        (define new-exp (Prim 'read '()))
+        (define new-key-val-list (list (list key new-exp)))
+        (values (Var key) new-key-val-list )
+      ]
+
+    )
+  )
+
+(define (normalise-env-exp env exp)
+  (match env
+    ['() exp]
+    ; [(list (list key val)) exp]
+    [`(,(list key val) . ,rest-list)
+      (Let key val (normalise-env-exp rest-list exp))
+    ] 
+    ))
+
+
+(define (rco-exp e) 
+    (
+      match e
+      [(Int n) (Int n)]
+      [(Var x) (Var x)]
+      [(Let key val body)
+        (Let key (rco-exp val) (rco-exp body))
+      ]
+      [(Prim '+ (list a b)) 
+        (define-values (a-atom a-list-env) (rco-atom a))
+        (define-values (b-atom b-list-env) (rco-atom b))
+        (define new-exp (Prim '+ (list a-atom b-atom)))
+        (define combined-list-env (append a-list-env b-list-env))
+        (normalise-env-exp combined-list-env new-exp)
+      ]
+      [(Prim '- (list a)) 
+        (define-values (a-atom a-list-env) (rco-atom a))
+        (define new-exp (Prim '- (list a-atom)))
+        (normalise-env-exp a-list-env new-exp)
+      ]
+      [
+        (Prim 'read '())
+        (Prim 'read '())
+      ]
+    )
+  )
+
 ;; remove-complex-opera* : R1 -> R1
 (define (remove-complex-opera* p)
-  (error "TODO: code goes here (remove-complex-opera*)"))
+  (match p
+    [(Program info e) (Program info (rco-exp  e))]
+  ))
 
 ;; explicate-control : R1 -> C0
+
+(define (explicate_tail e)
+  (match e
+    [(Var x) (values (Return (Var x)) '())]
+    [(Int n) (values (Return (Int n)) '())]
+    [(Let x rhs body) (let*-values ([(intmd-seq1 intmd-vars1) (explicate_tail body)]
+                                    [(intmd-seq2 intmd-vars2) (explicate_assign rhs x intmd-seq1)])
+                                    (values intmd-seq2 (append intmd-vars1 intmd-vars2 `(,x))) )]
+    [(Prim '- (list atom)) (values (Return (Prim '- (list atom))) '())]
+    [(Prim '+ (list atom1 atom2)) (values (Return (Prim '+ (list atom1 atom2))) '())]
+    [(Prim 'read '()) (values (Return (Prim 'read '())) '())]
+    [else (error "explicate_tail unhandled case" e)]))
+
+
+(define (explicate_assign e x cont)
+  (match e
+    [(Var y) (values (Seq (Assign (Var x) (Var y)) cont) '())]
+    [(Int n) (values (Seq (Assign (Var x) (Int n)) cont) '())]
+    [(Let y rhs body) (let*-values ([(intmd-seq1 intmd-vars1) (explicate_assign body x cont)]
+                                    [(intmd-seq2 intmd-vars2) (explicate_assign rhs y intmd-seq1)])
+                                    (values intmd-seq2 (append intmd-vars1 intmd-vars2 `(,y))))]
+    [(Prim '- (list atom)) (values (Seq (Assign (Var x) (Prim '- (list atom))) cont) '())]
+    [(Prim '+ (list atom1 atom2)) (values (Seq (Assign (Var x) (Prim '+  (list atom1 atom2))) cont) '())]
+    [(Prim 'read '()) (values (Seq (Assign (Var x) (Prim 'read '())) cont) '())]
+    [else (error "explicate_assign unhandled case" e)]))
+  
 (define (explicate-control p)
-  (error "TODO: code goes here (explicate-control)"))
+  (match p
+    [(Program info body) (let-values ([(intmd-seq intmd-vars) (explicate_tail body)]) 
+                                    ; (CProgram intmd-vars `((start . ,intmd-seq))))]))
+                                    (CProgram (dict-set #hash() 'locals intmd-vars) `((start . ,intmd-seq))))]))
+
+(define (int-to-imm e)
+  (match e
+    [(Int a) (Imm a)]
+    [(Var a) (Var a)]
+  )
+)
+
+(define (instruction-to-x86 e)
+  (match e 
+    [(Assign var (Prim '+ (list a b)))
+      (list 
+        (Instr 'movq (list (int-to-imm a) var))
+        (Instr 'addq (list (int-to-imm b) var))
+      )
+    ]
+    [(Assign var (Prim '- (list a)))
+      (list 
+        (Instr 'movq (list (int-to-imm a) var))
+        (Instr 'negq (list var))
+      )
+    ]
+    [(Assign var (Prim 'read '()))
+      (cons (Callq 'read_int 0) ; 0 is a number of arguments
+        (if (equal? var (Reg 'rax)) 
+          '() 
+          (list (Instr 'movq (list (Reg 'rax) var)))))
+    ]
+    [(Assign var var2)
+      (if (equal? var var2) '()
+        (list (Instr 'movq (list (int-to-imm var2) var))))]
+  ))
+
+(define (resolve-select-instructions e)
+  (match e
+    [(Seq instr rest-seq) 
+      (append (instruction-to-x86 instr) (resolve-select-instructions rest-seq))
+    ]
+    [(Return e)
+      (define instr (Assign (Reg 'rax) e))
+      (append (instruction-to-x86 instr) (list (Jmp 'conclusion)))
+    ]
+    )
+)
 
 ;; select-instructions : C0 -> pseudo-x86
 (define (select-instructions p)
-  (error "TODO: code goes here (select-instructions)"))
+  (match p
+    [
+      (CProgram info body)
+      (let ([frame-1 (car body)]) ; removing locals from info in program because we are now storing it in blocks
+        (X86Program (dict-remove info 'locals) (list  (cons (car frame-1) (Block info (resolve-select-instructions (cdr frame-1))))  ) )
+      )
+    ])
+  )
 
 ;; assign-homes : pseudo-x86 -> pseudo-x86
+
+(define (create-env lst offset)
+  (match lst
+  ['() #hash()]
+  [(cons x y) (dict-set (create-env y (- offset 8)) x (Deref 'rbp offset))]))
+
+(define (arg->memory arg env)
+  (match arg
+  [(Var x) (dict-ref env x)]
+  [(Imm i) (Imm i)]
+  [(Reg r) (Reg r)]))
+
+(define (map-instr env instr)
+  (match instr
+  [(Instr op lst) (Instr op (for/list ([e lst]) (arg->memory e env)))]
+  [(Jmp label) (Jmp label)]
+  [(Callq label arity) (Callq label arity)]))
+
+(define (map-instrs env lst)
+  (match lst
+  ['() '()]
+  [(cons x y) (cons (map-instr env x) (map-instrs env y))]))
+
 (define (assign-homes p)
-  (error "TODO: code goes here (assign-homes)"))
+  (match p
+  [(X86Program info body) (X86Program info (match body
+                                          [`((,label . ,block))
+                                            (match block
+                                            [(Block info instrs) 
+                                            `((,label . ,(Block info (map-instrs (create-env (dict-ref info 'locals) -8) instrs))))
+                                            ]) 
+                                          ]))]))
+
+(define (patch-instr instr)
+  (match instr
+  [(Instr op (list (Deref r1 o1) (Deref r2 o2))) 
+    (list (Instr 'movq (list (Deref r1 o1) (Reg 'rax))) (Instr op (list (Reg 'rax) (Deref r2 o2))))]
+    [else (list instr)]))
+
+(define (patch-instrs lst-instrs)
+  (foldr append '() (map patch-instr lst-instrs)))
 
 ;; patch-instructions : psuedo-x86 -> x86
 (define (patch-instructions p)
-  (error "TODO: code goes here (patch-instructions)"))
+(match p
+  [(X86Program info body) (X86Program info (match body
+                                          [`((,label . ,block))
+                                            (match block
+                                              [(Block info instrs) 
+                                              `((,label . ,(Block info (patch-instrs instrs))))
+                                              ]) 
+                                          ]))]))
+
+(define (generate-main body offset) 
+  (dict-set body 'main 
+    (
+      Block '()
+      (list  
+        (Instr 'pushq (list (Reg 'rbp))) 
+        (Instr 'movq (list (Reg 'rsp) (Reg 'rbp))) 
+        (Instr 'subq (list (Imm offset) (Reg 'rsp))) 
+        (Jmp 'start) )
+    )
+  )
+)
+
+(define (generate-conclusion body offset) 
+  (dict-set body 'conclusion 
+    (Block '()
+      (list 
+        (Instr 'addq (list (Imm offset) (Reg 'rsp))) 
+        (Instr 'popq (list (Reg 'rbp))) 
+        (Retq))
+      )
+  )
+)
+
+(define (mult-16 n)
+  (if (= (modulo n 16) 0) n (mult-16 (add1 n))))
 
 ;; prelude-and-conclusion : x86 -> x86
 (define (prelude-and-conclusion p)
-  (error "TODO: code goes here (prelude-and-conclusion)"))
+(match p
+  [(X86Program info body) 
+    (define var-list (match (dict-ref body 'start)
+      [
+        (Block info body-2) (dict-ref info 'locals)
+      ])) 
+    ;(define offset (* 8 (length var-list)))
+    (define offset (mult-16 (* 8 (length var-list))))
+    (define body-with-main (generate-main body offset))
+    (define body-complete (generate-conclusion body-with-main offset))
+    (X86Program info body-complete) 
+  ]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Bonus
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (pe_neg r)
+  (match r
+    [(Int n) (Int (fx- 0 n))]
+    [else (Prim '- (list r))]))
+
+(define (pe_add r1 r2)
+  (match* (r1 r2)
+    [((Int n1) (Int n2)) (Int (fx+ n1 n2))]
+    [(_ _) (Prim '+ (list r1 r2))]))
+
+(define (pe_sub r1 r2)
+  (match* (r1 r2)
+    [((Int n1) (Int n2)) (Int (fx- n1 n2))]
+    [(_ _) (Prim '- (list r1 r2))]))
+
+(define (pe_exp e)
+  (match e
+    [(Int n) (Int n)]
+    [(Var x) (Var x)]
+    [(Prim 'read '()) (Prim 'read '())]
+    [(Prim '- (list e1)) (pe_neg (pe_exp e1))]
+    [(Prim '+ (list e1 e2)) (pe_add (pe_exp e1) (pe_exp e2))]
+    [(Prim '- (list e1 e2)) (pe_sub (pe_exp e1) (pe_exp e2))]
+    [(Let x e1 e2) (Let x (pe_exp e1) (pe_exp e2))]))
+
+
+(define (pe_Lvar p)
+  (match p
+    [(Program '() e) (Program '() (pe_exp e))]))
 
 ;; Define the compiler passes to be used by interp-tests and the grader
 ;; Note that your compiler file (the file that defines the passes)
 ;; must be named "compiler.rkt"
 (define compiler-passes
-  `( ("uniquify" ,uniquify ,interp-Lvar)
+  `(  ("patial evaluator Lvar" ,pe_Lvar ,interp-Lvar)
+      ("uniquify" ,uniquify ,interp-Lvar)
      ;; Uncomment the following passes as you finish them.
-     ;; ("remove complex opera*" ,remove-complex-opera* ,interp-Lvar)
-     ;; ("explicate control" ,explicate-control ,interp-Cvar)
-     ;; ("instruction selection" ,select-instructions ,interp-x86-0)
-     ;; ("assign homes" ,assign-homes ,interp-x86-0)
-     ;; ("patch instructions" ,patch-instructions ,interp-x86-0)
-     ;; ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-0)
+     ("remove complex opera*" ,remove-complex-opera* ,interp-Lvar)
+     ("explicate control" ,explicate-control ,interp-Cvar)
+     ("instruction selection" ,select-instructions ,interp-x86-0)
+     ("assign homes" ,assign-homes ,interp-x86-0)
+     ("patch instructions" ,patch-instructions ,interp-x86-0)
+     ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-0)
      ))
 
