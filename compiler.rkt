@@ -367,8 +367,9 @@
     [(Var x) (Var x)]
     [(Prim 'read '()) (Prim 'read '())]
     [(Prim '- (list e1)) (pe_neg (pe_exp e1))]
+    [(Prim '+ (list (Int e1) e2)) (pe_add (Int e1) (pe_exp e2))]
+    [(Prim '+ (list e1 (Int e2) )) (pe_add (Int e2) (pe_exp e1))]
     [(Prim '+ (list e1 e2)) (pe_add (pe_exp e1) (pe_exp e2))]
-    [(Prim '- (list e1 e2)) (pe_sub (pe_exp e1) (pe_exp e2))]
     [(Let x e1 e2) (Let x (pe_exp e1) (pe_exp e2))]))
 
 
