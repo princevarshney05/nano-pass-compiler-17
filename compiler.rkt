@@ -373,9 +373,21 @@
     [(Let x e1 e2) (Let x (pe_exp e1) (pe_exp e2))]))
 
 
+; Add a pe_intelligent_eval that evaluates the function from left to right
+; and then evaluates the result
+(define (pe_intelligent_exp e)
+  (match e
+    [(Int n) (Int n)]
+    [(Var x) (Var x)]
+    [(Prim 'read '()) (Prim 'read '())]
+    [(Prim '- (list e1)) (pe_neg (pe_intelligent_exp e1))]
+    [(Prim '+ (list (Int e1) (Prim '+ (list (Int e2) e3)))) (pe_add (pe_add (Int e1) (Int e2)) (pe_intelligent_exp e3))]
+    [(Prim '+ (list e1 e2)) (pe_add (pe_intelligent_exp e1) (pe_intelligent_exp e2))]
+    [(Let x e1 e2) (Let x (pe_intelligent_exp e1) (pe_intelligent_exp e2))]))
+
 (define (pe_Lvar p)
   (match p
-    [(Program '() e) (Program '() (pe_exp e))]))
+    [(Program '() e) (Program '() (pe_intelligent_exp (pe_exp e)))]))
 
 ;; Define the compiler passes to be used by interp-tests and the grader
 ;; Note that your compiler file (the file that defines the passes)
