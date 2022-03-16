@@ -4,8 +4,10 @@
 (require "interp-Lint.rkt")
 (require "interp-Lvar.rkt")
 (require "interp-Cvar.rkt")
+(require "interp-Lif.rkt")
 (require "interp.rkt")
 (require "utilities.rkt")
+(require "type-check-Lif.rkt")
 (provide (all-defined-out))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -61,13 +63,17 @@
         (Var (dict-ref env x))
        ]
       [(Int n) (Int n)]
+      [(Bool t) (Bool t)]
       [(Let x e body)
         (let ([newenv (dict-set env x (gensym))])
           (Let (dict-ref newenv x) ((uniquify-exp env) e) ((uniquify-exp newenv) body))
         )
       ]
       [(Prim op es)
-       (Prim op (for/list ([e es]) ((uniquify-exp env) e)))])))
+       (Prim op (for/list ([e es]) ((uniquify-exp env) e)))]
+      [(If e1 e2 e3)
+        (If ((uniquify-exp env) e1) ((uniquify-exp env) e2) ((uniquify-exp env) e3))]
+       )))
 
 ;; uniquify : R1 -> R1
 (define (uniquify p)
@@ -390,18 +396,45 @@
   (match p
     [(Program '() e) (Program '() (pe_intelligent_exp (pe_exp e)))]))
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; A2
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; shrink replaces and and or with if
+(define (shrink-exp exp)
+  (match exp
+    [(Prim 'and (list e1 e2)) (If (shrink-exp e1) (shrink-exp e2) (Bool #f))]
+    [(Prim 'or (list e1 e2)) (If (shrink-exp e1) (Bool #t) (shrink-exp e2))]
+    [(Int n) (Int n)]
+    [(Var x) (Var x)]
+    [(Bool t) (Bool t)]
+    [(Prim 'read '()) (Prim 'read '())]
+    [(Prim '- (list e1)) (Prim '- (list (shrink-exp e1)))]
+    [(Prim '+ (list e1 e2)) (Prim '+ (list (shrink-exp e1) (shrink-exp e2)))]
+    [(Let x e1 e2) (Let x (shrink-exp e1) (shrink-exp e2))]
+    [(If e1 e2 e3) (If (shrink-exp e1) (shrink-exp e2) (shrink-exp e3))]
+    [(Prim op es)
+       (Prim op (for/list ([e es]) (shrink-exp e)))]))
+
+(define (shrink p)
+  (match p
+    [(Program info e) (Program info (shrink-exp e))]))
+
 ;; Define the compiler passes to be used by interp-tests and the grader
 ;; Note that your compiler file (the file that defines the passes)
 ;; must be named "compiler.rkt"
 (define compiler-passes
-  `(  ("patial evaluator Lvar" ,pe_Lvar ,interp-Lvar)
-      ("uniquify" ,uniquify ,interp-Lvar)
+  `(  ("shrink", shrink, interp-Lif, type-check-Lif)
+      ("uniquify" ,uniquify ,interp-Lif ,type-check-Lif)
+      ; ("patial evaluator Lvar" ,pe_Lvar ,interp-Lvar)
      ;; Uncomment the following passes as you finish them.
-     ("remove complex opera*" ,remove-complex-opera* ,interp-Lvar)
-     ("explicate control" ,explicate-control ,interp-Cvar)
-     ("instruction selection" ,select-instructions ,interp-x86-0)
-     ("assign homes" ,assign-homes ,interp-x86-0)
-     ("patch instructions" ,patch-instructions ,interp-x86-0)
-     ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-0)
+    ;  ("remove complex opera*" ,remove-complex-opera* ,interp-Lvar)
+    ;  ("explicate control" ,explicate-control ,interp-Cvar)
+    ;  ("instruction selection" ,select-instructions ,interp-x86-0)
+    ;  ("assign homes" ,assign-homes ,interp-x86-0)
+    ;  ("patch instructions" ,patch-instructions ,interp-x86-0)
+    ;  ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-0)
      ))
 
