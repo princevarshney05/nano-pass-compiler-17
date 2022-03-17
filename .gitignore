@@ -18,3 +18,7 @@ compiled/
 
 # Dependency tracking files
 *.dep
+
+# Extra
+.DS_Store
+vjs.rkt

@@ -388,9 +388,6 @@
     [(Int n) (Int n)]
     [(Var x) (Var x)]
     [(Bool t) (Bool t)]
-    [(Prim 'read '()) (Prim 'read '())]
-    [(Prim '- (list e1)) (Prim '- (list (shrink-exp e1)))]
-    [(Prim '+ (list e1 e2)) (Prim '+ (list (shrink-exp e1) (shrink-exp e2)))]
     [(Let x e1 e2) (Let x (shrink-exp e1) (shrink-exp e2))]
     [(If e1 e2 e3) (If (shrink-exp e1) (shrink-exp e2) (shrink-exp e3))]
     [(Prim op es)
