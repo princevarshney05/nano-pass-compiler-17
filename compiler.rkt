@@ -59,40 +59,15 @@
   (match e
     [(Int n) (values (Int n) '())]
     [(Var x) (values (Var x) '())]
-    [(Bool t) (values (Bool t) '())]
     [(Let key val body)
      (define-values (body-atom body-env) (rco-atom body))
      (values body-atom (cons (list key (rco-exp val)) body-env))]
-    ;  [(If e1 e2 e3)
-    ;   (define-values (e1-atom e1-env) (rco-atom e1))
-    ;   (define-values (e2-atom e2-env) (rco-atom e2))
-    ;   (define-values (e3-atom e3-env) (rco-atom e3))
-    ;   (values (If e1-atom e2-atom e3-atom) (append e1-env e2-env e3-env))]
-    [(Prim '+ (list a b))
-     (define-values (a-atom a-list-env) (rco-atom a))
-     (define-values (b-atom b-list-env) (rco-atom b))
+    [(Prim op es)
+     (define-values (new-exp new-env) (for/lists (l1 l2) ([e es]) (rco-atom e)))
      (define key (gensym))
-
-     (define new-exp (Prim '+ (list a-atom b-atom)))
-     (define new-key-val-list (list (list key new-exp)))
-     (define combined-list-env (append a-list-env b-list-env new-key-val-list))
-
-     ; (values (Var key) (list (list key (normalise-env-exp combined-list-env new-exp))))
-     (values (Var key) combined-list-env)]
-    [(Prim '- (list a))
-     (define-values (a-atom a-list-env) (rco-atom a))
-     (define key (gensym))
-
-     (define new-exp (Prim '- (list a-atom)))
-     (define new-key-val-list (list (list key new-exp)))
-     (define combined-list-env (append a-list-env new-key-val-list))
-
-     (values (Var key) combined-list-env)]
-    [(Prim 'read '())
-     (define key (gensym))
-     (define new-exp (Prim 'read '()))
-     (define new-key-val-list (list (list key new-exp)))
-     (values (Var key) new-key-val-list)]))
+     (define new-key-val-list (list (list key (Prim op new-exp))))
+     (define combined-list-env (append (append* new-env) new-key-val-list))
+     (values (Var key) combined-list-env)]))
 
 (define (normalise-env-exp env exp)
   (match env
@@ -104,20 +79,10 @@
   (match e
     [(Int n) (Int n)]
     [(Var x) (Var x)]
-    [(Bool t) (Bool t)]
     [(Let key val body) (Let key (rco-exp val) (rco-exp body))]
-    [(If e1 e2 e3) (If (rco-exp e1) (rco-exp e2) (rco-exp e3))]
-    [(Prim '+ (list a b))
-     (define-values (a-atom a-list-env) (rco-atom a))
-     (define-values (b-atom b-list-env) (rco-atom b))
-     (define new-exp (Prim '+ (list a-atom b-atom)))
-     (define combined-list-env (append a-list-env b-list-env))
-     (normalise-env-exp combined-list-env new-exp)]
-    [(Prim '- (list a))
-     (define-values (a-atom a-list-env) (rco-atom a))
-     (define new-exp (Prim '- (list a-atom)))
-     (normalise-env-exp a-list-env new-exp)]
-    [(Prim 'read '()) (Prim 'read '())]))
+    [(Prim op es)
+     (define-values (new-exp combined-list-env) (for/lists (l1 l2) ([e es]) (rco-atom e)))
+     (normalise-env-exp (append* combined-list-env) (Prim op new-exp))]))
 
 ;; remove-complex-opera* : R1 -> R1
 (define (remove-complex-opera* p)
@@ -376,7 +341,7 @@
     ("uniquify" ,uniquify ,interp-Lif ,type-check-Lif)
     ("patial evaluator Lvar" ,pe_Lif ,interp-Lif ,type-check-Lif)
     ;; Uncomment the following passes as you finish them.
-    ;  ("remove complex opera*" ,remove-complex-opera* ,interp-Lif, type-check-Lif)
+    ("remove complex opera*" ,remove-complex-opera* ,interp-Lif ,type-check-Lif)
     ;  ("explicate control" ,explicate-control ,interp-Cvar)
     ;  ("instruction selection" ,select-instructions ,interp-x86-0)
     ;  ("assign homes" ,assign-homes ,interp-x86-0)
