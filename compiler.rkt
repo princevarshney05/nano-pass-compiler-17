@@ -83,36 +83,14 @@
         (define-values (body-atom body-env) (rco-atom body))
         (values body-atom (cons (list key (rco-exp val)) body-env ))
       ]
-      [ (Prim '+ (list a b)) 
-        (define-values (a-atom a-list-env) (rco-atom a))
-        (define-values (b-atom b-list-env) (rco-atom b))
-        (define key (gensym))
-
-        (define new-exp (Prim '+ (list a-atom b-atom)))
-        (define new-key-val-list (list (list key new-exp)))
-        (define combined-list-env (append a-list-env b-list-env new-key-val-list))
-        
-        ; (values (Var key) (list (list key (normalise-env-exp combined-list-env new-exp))))
-        (values (Var key) combined-list-env)
+      [(Prim op es)
+        (define-values (new-exp new-env)
+          (for/lists (l1 l2) ([e es]) (rco-atom e)))
+          (define key (gensym))
+          (define new-key-val-list (list (list key (Prim op new-exp))))
+          (define combined-list-env (append (append* new-env) new-key-val-list))
+          (values (Var key) combined-list-env)
       ]
-      [ (Prim '- (list a)) 
-        (define-values (a-atom a-list-env) (rco-atom a))
-        (define key (gensym))
-
-        (define new-exp (Prim '- (list a-atom)))
-        (define new-key-val-list (list (list key new-exp)))
-        (define combined-list-env (append a-list-env new-key-val-list))
-        
-        (values (Var key) combined-list-env)
-      ]
-      [
-        (Prim 'read '())
-        (define key (gensym))
-        (define new-exp (Prim 'read '()))
-        (define new-key-val-list (list (list key new-exp)))
-        (values (Var key) new-key-val-list )
-      ]
-
     )
   )
 
@@ -134,21 +112,10 @@
       [(Let key val body)
         (Let key (rco-exp val) (rco-exp body))
       ]
-      [(Prim '+ (list a b)) 
-        (define-values (a-atom a-list-env) (rco-atom a))
-        (define-values (b-atom b-list-env) (rco-atom b))
-        (define new-exp (Prim '+ (list a-atom b-atom)))
-        (define combined-list-env (append a-list-env b-list-env))
-        (normalise-env-exp combined-list-env new-exp)
-      ]
-      [(Prim '- (list a)) 
-        (define-values (a-atom a-list-env) (rco-atom a))
-        (define new-exp (Prim '- (list a-atom)))
-        (normalise-env-exp a-list-env new-exp)
-      ]
-      [
-        (Prim 'read '())
-        (Prim 'read '())
+      [(Prim op es)
+        (define-values (new-exp combined-list-env)
+          (for/lists (l1 l2) ([e es]) (rco-atom e)))
+          (normalise-env-exp (append* combined-list-env) (Prim op new-exp))
       ]
     )
   )
@@ -394,14 +361,15 @@
 ;; Note that your compiler file (the file that defines the passes)
 ;; must be named "compiler.rkt"
 (define compiler-passes
-  `(  ("patial evaluator Lvar" ,pe_Lvar ,interp-Lvar)
+  `( 
+    ;  ("patial evaluator Lvar" ,pe_Lvar ,interp-Lvar)
       ("uniquify" ,uniquify ,interp-Lvar)
      ;; Uncomment the following passes as you finish them.
      ("remove complex opera*" ,remove-complex-opera* ,interp-Lvar)
-     ("explicate control" ,explicate-control ,interp-Cvar)
-     ("instruction selection" ,select-instructions ,interp-x86-0)
-     ("assign homes" ,assign-homes ,interp-x86-0)
-     ("patch instructions" ,patch-instructions ,interp-x86-0)
-     ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-0)
+    ;  ("explicate control" ,explicate-control ,interp-Cvar)
+    ;  ("instruction selection" ,select-instructions ,interp-x86-0)
+    ;  ("assign homes" ,assign-homes ,interp-x86-0)
+    ;  ("patch instructions" ,patch-instructions ,interp-x86-0)
+    ;  ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-0)
      ))
 
