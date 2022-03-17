@@ -1,6 +1,6 @@
 (let ([x 10])
-(if (or #t #f)
+(if (or (< x 10) (> x 10))
     x
-    (if (and #t #t)
+    (if (and (eq? x 10) (<= x 10))
         x
         5)))
