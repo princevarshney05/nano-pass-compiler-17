@@ -63,9 +63,9 @@
     [(Let key val body)
      (define-values (body-atom body-env) (rco-atom body))
      (values body-atom (cons (list key (rco-exp val)) body-env))]
-    ; It is particularly important to not replace its condition with a temporary variable because 
+    ; It is particularly important to not replace its condition with a temporary variable because
     ; that would interfere with the generation of high-quality output in the upcoming explicate_control pass
-    [(If e1 e2 e3)  
+    [(If e1 e2 e3)
      (define key (gensym))
      (values (Var key) `((,key ,(rco-exp e))))]
     [(Prim op es)
@@ -101,12 +101,12 @@
 ;; explicate-control : R1 -> C0
 
 ;; Functoin to create block
-; (define (create_block tail)   
+; (define (create_block tail)
 ;   (match tail
-;     [(Goto label) (Goto label)] 
-;     [else 
+;     [(Goto label) (Goto label)]
+;     [else
 ;       (let ([label (gensym 'block)])
-;         (set! basic-blocks (cons (cons label tail) basic-blocks)) 
+;         (set! basic-blocks (cons (cons label tail) basic-blocks))
 ;         (Goto label))]))
 
 (define (explicate_tail e)
@@ -117,9 +117,7 @@
      (let*-values ([(intmd-seq1 intmd-vars1) (explicate_tail body)]
                    [(intmd-seq2 intmd-vars2) (explicate_assign rhs x intmd-seq1)])
        (values intmd-seq2 (append intmd-vars1 intmd-vars2 `(,x))))]
-    [(Prim '- (list atom)) (values (Return (Prim '- (list atom))) '())]
-    [(Prim '+ (list atom1 atom2)) (values (Return (Prim '+ (list atom1 atom2))) '())]
-    [(Prim 'read '()) (values (Return (Prim 'read '())) '())]
+    [(Prim op es) (values (Return (Prim op es)) '())]
     [else (error "explicate_tail unhandled case" e)]))
 
 (define (explicate_assign e x cont)
@@ -130,10 +128,7 @@
      (let*-values ([(intmd-seq1 intmd-vars1) (explicate_assign body x cont)]
                    [(intmd-seq2 intmd-vars2) (explicate_assign rhs y intmd-seq1)])
        (values intmd-seq2 (append intmd-vars1 intmd-vars2 `(,y))))]
-    [(Prim '- (list atom)) (values (Seq (Assign (Var x) (Prim '- (list atom))) cont) '())]
-    [(Prim '+ (list atom1 atom2))
-     (values (Seq (Assign (Var x) (Prim '+ (list atom1 atom2))) cont) '())]
-    [(Prim 'read '()) (values (Seq (Assign (Var x) (Prim 'read '())) cont) '())]
+    [(Prim op es) (values (Seq (Assign (Var x) (Prim op es)) cont) '())]
     [else (error "explicate_assign unhandled case" e)]))
 
 (define (explicate-control p)
@@ -160,11 +155,8 @@
      (cons (Callq 'read_int 0) ; 0 is a number of arguments
            (if (equal? var (Reg 'rax)) '() (list (Instr 'movq (list (Reg 'rax) var)))))]
     [(Assign var (Prim 'not (list a)))
-      (append 
-        (if (equal? var a) 
-          `() 
-          (list (Instr 'movq (list (int-to-imm a) var))))
-        (list (Instr 'xorq (Imm 1) var)))]
+     (append (if (equal? var a) `() (list (Instr 'movq (list (int-to-imm a) var))))
+             (list (Instr 'xorq (Imm 1) var)))]
     [(Assign var var2) (if (equal? var var2) '() (list (Instr 'movq (list (int-to-imm var2) var))))]))
 
 (define (resolve-select-instructions e)
