@@ -168,9 +168,7 @@
     [(Let x rhs body) (let*-values ([(intmd-seq1 intmd-vars1) (explicate_tail body)]
                                     [(intmd-seq2 intmd-vars2) (explicate_assign rhs x intmd-seq1)])
                                     (values intmd-seq2 (append intmd-vars1 intmd-vars2 `(,x))) )]
-    [(Prim '- (list atom)) (values (Return (Prim '- (list atom))) '())]
-    [(Prim '+ (list atom1 atom2)) (values (Return (Prim '+ (list atom1 atom2))) '())]
-    [(Prim 'read '()) (values (Return (Prim 'read '())) '())]
+    [(Prim op es) (values (Return (Prim op es)) '())]
     [else (error "explicate_tail unhandled case" e)]))
 
 
@@ -181,9 +179,7 @@
     [(Let y rhs body) (let*-values ([(intmd-seq1 intmd-vars1) (explicate_assign body x cont)]
                                     [(intmd-seq2 intmd-vars2) (explicate_assign rhs y intmd-seq1)])
                                     (values intmd-seq2 (append intmd-vars1 intmd-vars2 `(,y))))]
-    [(Prim '- (list atom)) (values (Seq (Assign (Var x) (Prim '- (list atom))) cont) '())]
-    [(Prim '+ (list atom1 atom2)) (values (Seq (Assign (Var x) (Prim '+  (list atom1 atom2))) cont) '())]
-    [(Prim 'read '()) (values (Seq (Assign (Var x) (Prim 'read '())) cont) '())]
+    [(Prim op es) (values (Seq (Assign (Var x) (Prim op es)) cont) '())]
     [else (error "explicate_assign unhandled case" e)]))
   
 (define (explicate-control p)
