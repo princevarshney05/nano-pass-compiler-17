@@ -100,6 +100,15 @@
 
 ;; explicate-control : R1 -> C0
 
+;; Functoin to create block
+; (define (create_block tail)   
+;   (match tail
+;     [(Goto label) (Goto label)] 
+;     [else 
+;       (let ([label (gensym 'block)])
+;         (set! basic-blocks (cons (cons label tail) basic-blocks)) 
+;         (Goto label))]))
+
 (define (explicate_tail e)
   (match e
     [(Var x) (values (Return (Var x)) '())]
@@ -137,7 +146,9 @@
 (define (int-to-imm e)
   (match e
     [(Int a) (Imm a)]
-    [(Var a) (Var a)]))
+    [(Var a) (Var a)]
+    [(Bool #t) (Imm 1)]
+    [(Bool #f) (Imm 0)]))
 
 (define (instruction-to-x86 e)
   (match e
@@ -148,6 +159,12 @@
     [(Assign var (Prim 'read '()))
      (cons (Callq 'read_int 0) ; 0 is a number of arguments
            (if (equal? var (Reg 'rax)) '() (list (Instr 'movq (list (Reg 'rax) var)))))]
+    [(Assign var (Prim 'not (list a)))
+      (append 
+        (if (equal? var a) 
+          `() 
+          (list (Instr 'movq (list (int-to-imm a) var))))
+        (list (Instr 'xorq (Imm 1) var)))]
     [(Assign var var2) (if (equal? var var2) '() (list (Instr 'movq (list (int-to-imm var2) var))))]))
 
 (define (resolve-select-instructions e)
@@ -163,7 +180,7 @@
     [(CProgram info body)
      (let ([frame-1
             (car
-             body)]) ; removing locals from info in program because we are now storing it in blocks
+             body)]) ; removing locals from info in pro gram because we are now storing it in blocks
        (X86Program (dict-remove info 'locals)
                    (list (cons (car frame-1)
                                (Block info (resolve-select-instructions (cdr frame-1)))))))]))
