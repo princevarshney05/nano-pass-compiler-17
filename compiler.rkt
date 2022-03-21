@@ -281,6 +281,121 @@
                                             ]) 
                                           ]))]))
 
+; (X86Program '#hash() 
+;   (list 
+;     (cons 'start 
+;       (Block '#hash((locals . (g10901))) (list (Instr 'movq (list (Imm 10) (Var 'g10901))) (Instr 'movq (list (Var 'g10901) (Reg 'rax))) (Jmp 'conclusion))))))
+
+(define (valid-set x)
+  (match x
+    [(Imm t) (set)]
+    [else (set x)]
+  )
+)
+
+(define (get-read-write-sets instr)
+  (match instr
+    [
+      (Instr 'movq (list A B))
+      (define read-set (valid-set A))
+      (define write-set (valid-set B))
+      (values read-set write-set)
+    ]
+    [
+      (Instr 'addq (list A B))
+      (define read-set (set-union (valid-set A) (valid-set B)))
+      (define write-set (valid-set B))
+      (values read-set write-set)
+    ]
+    [
+      (Instr 'subq (list A B))
+      (define read-set (set-union (valid-set A) (valid-set B)))
+      (define write-set (valid-set B))
+      (values read-set write-set)
+    ]
+    [
+      (Instr 'negq (list A))
+      (define read-set (valid-set A))
+      (define write-set (valid-set A))  
+      (values read-set write-set)
+    ]
+    ; [
+    ;   (Jmp x)
+    ;   (values (set (Reg 'rax)) (set))
+    ; ]
+    [
+      else
+      (values (set) (set))
+    ]
+  )
+)
+
+(define (get-live-vars info lst)
+  ; (print  "----> ")
+  ; (print lst)
+  ; (display "\n")
+  (match lst
+    [ 
+      '()
+      (define new-info (dict-set info 'live-vars (list (set (Reg 'rax) (Reg 'rsp)))))
+      new-info 
+    ]
+    [
+      (cons x y)
+      (define new-info (get-live-vars info y))
+      (define live-vars (dict-ref new-info 'live-vars))
+      (define last-set (car live-vars))
+      (define-values (read-set write-set) (get-read-write-sets x))
+  ;     (print x)
+  ; (display "\n")
+  ;     (print "last set: ")
+  ;     (print last-set)
+  ; (display "\n")
+  ;     (print "write set: ")
+  ;     (print write-set)
+  ; (display "\n")
+  ;     (print "read set: ")
+  ;     (print read-set)
+  ; (display "\n")
+      (define new-set (set-union (set-subtract last-set write-set) read-set))
+  ; (print "new set: ")
+  ; (print new-set)
+  ; (display "\n\n\n")
+      (define new-live-vars (
+        if (null? y)
+        (cons new-set '())
+        (cons new-set live-vars)
+        ))
+      (define newest-info (dict-set info 'live-vars new-live-vars))
+      newest-info
+    ]
+  )
+)
+
+(define (uncover-live-block p)
+  (match p
+    [
+      (cons label (Block info instrlist))
+      (define new-info (get-live-vars info instrlist))
+      ; (display "-----> \n")
+      ; (print new-info)
+      ; (display "\n")
+      (cons label (Block new-info instrlist))
+    ]
+  )
+)
+
+(define (uncover-live p)
+  (match p
+    [(X86Program info body) 
+    (
+      X86Program info 
+        (for/list ([item body]) (uncover-live-block item))
+    )
+    ]
+  )
+)
+
 (define (patch-instr instr)
   (match instr
   [(Instr op (list (Deref r1 o1) (Deref r2 o2))) 
@@ -400,6 +515,9 @@
      ("remove complex opera*" ,remove-complex-opera* ,interp-Lvar)
      ("explicate control" ,explicate-control ,interp-Cvar)
      ("instruction selection" ,select-instructions ,interp-x86-0)
+     ("uncover live" ,uncover-live ,interp-x86-0)
+    ;  ("build interference graph" ,build-interference-graph ,interp-x86-0)
+    ;  ("allocate registers" ,allocate-registers ,interp-x86-0)
      ("assign homes" ,assign-homes ,interp-x86-0)
      ("patch instructions" ,patch-instructions ,interp-x86-0)
      ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-0)
