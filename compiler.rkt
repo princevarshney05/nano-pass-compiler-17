@@ -123,8 +123,9 @@
                    [(intmd-seq2 intmd-vars2) (explicate_assign rhs x intmd-seq1)])
        (values intmd-seq2 (append intmd-vars1 intmd-vars2 `(,x))))]
     [(Prim op es) (values (Return (Prim op es)) '())]
-    [(If cnd^ thn^ els^) (let*-values ([(intmd-seqthn intmd-vars1) (explicate_tail thn^)]
-                    [(intmd-seqels intmd-vars2) (explicate_tail els^)]
+    [(If cnd^ thn^ els^)
+     (let*-values ([(intmd-seqthn intmd-vars1) (explicate_tail thn^)]
+                   [(intmd-seqels intmd-vars2) (explicate_tail els^)]
                    [(intmd-seqcnd intmd-vars3) (explicate_pred cnd^ intmd-seqthn intmd-seqels)])
        (values intmd-seqcnd (remove-duplicates (append intmd-vars1 intmd-vars2 intmd-vars3))))]
     [else (error "explicate_tail unhandled case" e)]))
@@ -138,8 +139,9 @@
      (let*-values ([(intmd-seq1 intmd-vars1) (explicate_assign body x cont)]
                    [(intmd-seq2 intmd-vars2) (explicate_assign rhs y intmd-seq1)])
        (values intmd-seq2 (append intmd-vars1 intmd-vars2 `(,y))))]
-    [(If cnd^ thn^ els^) (let*-values ([(intmd-seqthn intmd-vars1) (explicate_assign thn^ x cont)]
-                    [(intmd-seqels intmd-vars2) (explicate_assign els^ x cont)]
+    [(If cnd^ thn^ els^)
+     (let*-values ([(intmd-seqthn intmd-vars1) (explicate_assign thn^ x cont)]
+                   [(intmd-seqels intmd-vars2) (explicate_assign els^ x cont)]
                    [(intmd-seqcnd intmd-vars3) (explicate_pred cnd^ intmd-seqthn intmd-seqels)])
        (values intmd-seqcnd (remove-duplicates (append intmd-vars1 intmd-vars2 intmd-vars3))))]
     [(Prim op es) (values (Seq (Assign (Var x) (Prim op es)) cont) '())]
@@ -171,7 +173,8 @@
      (let-values ([(intmd-seq intmd-vars) (explicate_tail body)])
        ; (CProgram intmd-vars `((start . ,intmd-seq))))]))
        ;(CProgram (dict-set #hash() 'locals intmd-vars) `((start . ,intmd-seq))))]))
-        (CProgram (dict-set #hash() 'locals intmd-vars) (cons (cons 'start intmd-seq) basic-blocks)))]))
+       (CProgram (dict-set #hash() 'locals intmd-vars)
+                 (cons (cons 'start intmd-seq) basic-blocks)))]))
 (define (int-to-imm e)
   (match e
     [(Int a) (Imm a)]
@@ -376,6 +379,16 @@
     [(Bool t) (Bool t)]
     [(Let x e1 e2) (Let x (shrink-exp e1) (shrink-exp e2))]
     [(If e1 e2 e3) (If (shrink-exp e1) (shrink-exp e2) (shrink-exp e3))]
+    [(Prim '- (list e1 e2)) (Prim '+ (list e1 (Prim '- (list e2))))]
+    [(Prim '> (list e1 e2))
+     (define v (gensym))
+     (Let v (shrink-exp e1) (Prim '< (list (shrink-exp e2) (Var v))))]
+    [(Prim '<= (list e1 e2))
+     (define v (gensym))
+     (Let v (shrink-exp e1) (Prim 'not (list (Prim '< (list (shrink-exp e2) (Var v))))))]
+    [(Prim '>= (list e1 e2))
+     (define v (gensym))
+     (Let v (shrink-exp e1) (Prim 'not (list (Prim '< (list (Var v) (shrink-exp e2))))))]
     [(Prim op es)
      (Prim op
            (for/list ([e es])
@@ -394,7 +407,7 @@
     ("patial evaluator Lvar" ,pe_Lif ,interp-Lif ,type-check-Lif)
     ;; Uncomment the following passes as you finish them.
     ("remove complex opera*" ,remove-complex-opera* ,interp-Lif ,type-check-Lif)
-    ("explicate control" ,explicate-control ,interp-Cif,type-check-Cif)
+    ("explicate control" ,explicate-control ,interp-Cif ,type-check-Cif)
     ;  ("instruction selection" ,select-instructions ,interp-x86-0)
     ;  ("assign homes" ,assign-homes ,interp-x86-0)
     ;  ("patch instructions" ,patch-instructions ,interp-x86-0)
