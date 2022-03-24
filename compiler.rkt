@@ -6,9 +6,11 @@
 (require "interp-Lvar.rkt")
 (require "interp-Cvar.rkt")
 (require "interp-Lif.rkt")
+(require "interp-Cif.rkt")
 (require "interp.rkt")
 (require "utilities.rkt")
 (require "type-check-Lif.rkt")
+(require "type-check-Cif.rkt")
 (provide (all-defined-out))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -88,7 +90,7 @@
     [(Bool t) (Bool t)]
     [(Let key val body) (Let key (rco-exp val) (rco-exp body))]
     ; Should I add rco-exp for e1 too?
-    [(If e1 e2 e3) (If e1 (rco-exp e2) (rco-exp e3))]
+    [(If e1 e2 e3) (If (rco-exp e1) (rco-exp e2) (rco-exp e3))]
     [(Prim op es)
      (define-values (new-exp combined-list-env) (for/lists (l1 l2) ([e es]) (rco-atom e)))
      (normalise-env-exp (append* combined-list-env) (Prim op new-exp))]))
@@ -101,43 +103,75 @@
 ;; explicate-control : R1 -> C0
 
 ;; Functoin to create block
-; (define (create_block tail)
-;   (match tail
-;     [(Goto label) (Goto label)]
-;     [else
-;       (let ([label (gensym 'block)])
-;         (set! basic-blocks (cons (cons label tail) basic-blocks))
-;         (Goto label))]))
+(define basic-blocks '())
+
+(define (create_block tail)
+  (match tail
+    [(Goto label) (Goto label)]
+    [else
+     (let ([label (gensym 'block)])
+       (set! basic-blocks (cons (cons label tail) basic-blocks))
+       (Goto label))]))
 
 (define (explicate_tail e)
   (match e
     [(Var x) (values (Return (Var x)) '())]
     [(Int n) (values (Return (Int n)) '())]
+    [(Bool b) (values (Return (Bool b)) '())]
     [(Let x rhs body)
      (let*-values ([(intmd-seq1 intmd-vars1) (explicate_tail body)]
                    [(intmd-seq2 intmd-vars2) (explicate_assign rhs x intmd-seq1)])
        (values intmd-seq2 (append intmd-vars1 intmd-vars2 `(,x))))]
     [(Prim op es) (values (Return (Prim op es)) '())]
+    [(If cnd^ thn^ els^) (let*-values ([(intmd-seqthn intmd-vars1) (explicate_tail thn^)]
+                    [(intmd-seqels intmd-vars2) (explicate_tail els^)]
+                   [(intmd-seqcnd intmd-vars3) (explicate_pred cnd^ intmd-seqthn intmd-seqels)])
+       (values intmd-seqcnd (remove-duplicates (append intmd-vars1 intmd-vars2 intmd-vars3))))]
     [else (error "explicate_tail unhandled case" e)]))
 
 (define (explicate_assign e x cont)
   (match e
     [(Var y) (values (Seq (Assign (Var x) (Var y)) cont) '())]
     [(Int n) (values (Seq (Assign (Var x) (Int n)) cont) '())]
+    [(Bool b) (values (Seq (Assign (Var x) (Bool b)) cont) '())]
     [(Let y rhs body)
      (let*-values ([(intmd-seq1 intmd-vars1) (explicate_assign body x cont)]
                    [(intmd-seq2 intmd-vars2) (explicate_assign rhs y intmd-seq1)])
        (values intmd-seq2 (append intmd-vars1 intmd-vars2 `(,y))))]
+    [(If cnd^ thn^ els^) (let*-values ([(intmd-seqthn intmd-vars1) (explicate_assign thn^ x cont)]
+                    [(intmd-seqels intmd-vars2) (explicate_assign els^ x cont)]
+                   [(intmd-seqcnd intmd-vars3) (explicate_pred cnd^ intmd-seqthn intmd-seqels)])
+       (values intmd-seqcnd (remove-duplicates (append intmd-vars1 intmd-vars2 intmd-vars3))))]
     [(Prim op es) (values (Seq (Assign (Var x) (Prim op es)) cont) '())]
     [else (error "explicate_assign unhandled case" e)]))
+
+(define (explicate_pred cnd thn els)
+  (let ([thn-block (create_block thn)] [els-block (create_block els)])
+    (match cnd
+      [(Var x) (values (IfStmt (Prim 'eq? (list (Var x) (Bool #t))) thn-block els-block) '())]
+      [(Let x rhs body)
+       (let*-values ([(intmd-seq1 intmd-vars1) (explicate_pred body thn-block els-block)]
+                     [(intmd-seq2 intmd-vars2) (explicate_assign rhs x intmd-seq1)])
+         (values intmd-seq2 (remove-duplicates (append intmd-vars1 intmd-vars2 `(,x)))))]
+      [(Prim 'not (list e)) (values (IfStmt (Prim 'eq? (list e (Bool #t))) els-block thn-block) '())]
+      [(Prim op es)
+       #:when (or (eq? op 'eq?) (eq? op '<))
+       (values (IfStmt (Prim op es) thn-block els-block) '())]
+      [(Bool b) (values (if b thn els) '())]
+      [(If cnd^ thn^ els^)
+       (let*-values ([(intmd-seqthn intmd-vars1) (explicate_pred thn^ thn-block els-block)]
+                     [(intmd-seqels intmd-vars2) (explicate_pred els^ thn-block els-block)]
+                     [(intmd-seqcnd intmd-vars3) (explicate_pred cnd^ intmd-seqthn intmd-seqels)])
+         (values intmd-seqcnd (remove-duplicates (append intmd-vars1 intmd-vars2 intmd-vars3))))]
+      [else (error "explicate_pred unhandled case" cnd)])))
 
 (define (explicate-control p)
   (match p
     [(Program info body)
      (let-values ([(intmd-seq intmd-vars) (explicate_tail body)])
        ; (CProgram intmd-vars `((start . ,intmd-seq))))]))
-       (CProgram (dict-set #hash() 'locals intmd-vars) `((start . ,intmd-seq))))]))
-
+       ;(CProgram (dict-set #hash() 'locals intmd-vars) `((start . ,intmd-seq))))]))
+        (CProgram (dict-set #hash() 'locals intmd-vars) (cons (cons 'start intmd-seq) basic-blocks)))]))
 (define (int-to-imm e)
   (match e
     [(Int a) (Imm a)]
@@ -360,7 +394,7 @@
     ("patial evaluator Lvar" ,pe_Lif ,interp-Lif ,type-check-Lif)
     ;; Uncomment the following passes as you finish them.
     ("remove complex opera*" ,remove-complex-opera* ,interp-Lif ,type-check-Lif)
-    ;  ("explicate control" ,explicate-control ,interp-Cvar)
+    ("explicate control" ,explicate-control ,interp-Cif,type-check-Cif)
     ;  ("instruction selection" ,select-instructions ,interp-x86-0)
     ;  ("assign homes" ,assign-homes ,interp-x86-0)
     ;  ("patch instructions" ,patch-instructions ,interp-x86-0)
