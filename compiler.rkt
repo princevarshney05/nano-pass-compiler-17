@@ -378,9 +378,7 @@
     [
       (cons label (Block info instrlist))
       (define new-info (get-live-vars info instrlist))
-      ; (display "-----> \n")
-      ; (print new-info)
-      ; (display "\n")
+      
       (cons label (Block new-info instrlist))
     ]
   )
@@ -406,22 +404,52 @@
   (define interference-graph (undirected-graph `()))
   (match p
     [(X86Program pinfo (list (cons 'start block)))
+      (define local-vars (dict-ref pinfo 'locals))
+      (for/list ([item local-vars]) (print item)
+        (add-vertex! interference-graph (Var item)))
       (match block
         [(Block binfo instrs)
-            (define local-vars (dict-ref pinfo 'locals))
-            ;loop through each local variable and add it to the graph
-            (for/list ([item local-vars]) (print item)
-              (add-vertex! interference-graph (Var item)))
-            (display "Graph: \n")
-            (print-graph interference-graph)
-            ; (display "\nlocal-vars: ")
-            ; (print local-vars)
-            ; (display "\nPinfo: ")
-            ; (print pinfo)
-            ; (display "\n")
-          ])])
-    p
-)
+          (define live-vars (dict-ref binfo 'live-vars))
+          (display "\nlive vars: ")
+          (print live-vars)
+          (display "\n\n")
+          (add-interfering-edges instrs live-vars interference-graph)
+          ])
+      (display "Done building interference graph.\n")
+      (print interference-graph)
+      (print-dot interference-graph "interference-graph")    
+      (print-graph interference-graph)    
+      (define new-pinfo (dict-set pinfo 'conflicts interference-graph))
+      (X86Program new-pinfo (list (cons 'start block)))]))
+
+(define (add-interfering-edges instrs live-vars interference-graph)
+  (for ([inst instrs] [live-var live-vars])
+    (match inst
+      [(Instr 'movq (list s d))
+        (display "\nin movq\n")
+        (print s)
+        (display "\n")
+        (print d)
+        (display "\n")
+
+        ; for every v in set live-vars, if v!=d and v!=s, add an edge from v to d
+        (for/list ([v live-var])
+          (display "\nd: ")
+          (print v)
+          (display "\n")
+          (when (and (not (equal? v s)) (not (equal? v d)))
+            (print "adding edge")
+            (display "\n")
+            (add-edge! interference-graph v d)))]
+      [_ 
+        ; get write values
+        (display "\nin other")
+        (define-values (_ write-vars) (get-read-write-sets inst))
+        (display "\nwrite vars: ")
+        (print write-vars)
+        (display "\n")
+      ])))
+
 (define (patch-instr instr)
   (match instr
   [(Instr op (list (Deref r1 o1) (Deref r2 o2))) 
