@@ -241,11 +241,9 @@
   (match p
     [
       (CProgram info body)
-      (let ([frame-1 (car body)]) ; removing locals from info in program because we are now storing it in blocks
-        (X86Program (dict-remove info 'locals) (list  (cons (car frame-1) (Block info (resolve-select-instructions (cdr frame-1))))  ) )
-      )
-    ])
-  )
+           (X86Program info
+                  (for/list ([frame body])
+                    (cons (car frame) (Block '() (resolve-select-instructions (cdr frame))))))]))
 
 ;; assign-homes : pseudo-x86 -> pseudo-x86
 
@@ -271,6 +269,7 @@
   ['() '()]
   [(cons x y) (cons (map-instr env x) (map-instrs env y))]))
 
+; local variables are now moved to Program info  and removed from Block Info
 (define (assign-homes p)
   (match p
   [(X86Program info body) (X86Program info (match body
@@ -396,6 +395,23 @@
   )
 )
 
+
+;; build-interference-graph
+;; write a code to build interference graph
+;; Store the graph in info field of the program under the key 'conflicts'
+(define (build-interference-graph p)
+  (display "\nBuilding interference graph...\n")
+  (match p
+    [(X86Program info (list (cons 'start block)))
+      (print block)
+      (display "\nlive-vars: ")
+      (print info)
+    ]
+  )
+  (display "\n")
+  p
+)
+
 (define (patch-instr instr)
   (match instr
   [(Instr op (list (Deref r1 o1) (Deref r2 o2))) 
@@ -516,10 +532,10 @@
      ("explicate control" ,explicate-control ,interp-Cvar)
      ("instruction selection" ,select-instructions ,interp-x86-0)
      ("uncover live" ,uncover-live ,interp-x86-0)
-    ;  ("build interference graph" ,build-interference-graph ,interp-x86-0)
+     ("build interference graph" ,build-interference-graph ,interp-x86-0)
     ;  ("allocate registers" ,allocate-registers ,interp-x86-0)
-     ("assign homes" ,assign-homes ,interp-x86-0)
-     ("patch instructions" ,patch-instructions ,interp-x86-0)
-     ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-0)
+    ;  ("assign homes" ,assign-homes ,interp-x86-0)
+    ;  ("patch instructions" ,patch-instructions ,interp-x86-0)
+    ;  ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-0)
      ))
 
