@@ -426,29 +426,15 @@
   (for ([inst instrs] [live-var live-vars])
     (match inst
       [(Instr 'movq (list s d))
-        (display "\nin movq\n")
-        (print s)
-        (display "\n")
-        (print d)
-        (display "\n")
-
-        ; for every v in set live-vars, if v!=d and v!=s, add an edge from v to d
         (for/list ([v live-var])
-          (display "\nd: ")
-          (print v)
-          (display "\n")
           (when (and (not (equal? v s)) (not (equal? v d)))
-            (print "adding edge")
-            (display "\n")
             (add-edge! interference-graph v d)))]
       [_ 
-        ; get write values
-        (display "\nin other")
         (define-values (_ write-vars) (get-read-write-sets inst))
-        (display "\nwrite vars: ")
-        (print write-vars)
-        (display "\n")
-      ])))
+        (for/list ([d write-vars])
+          (for/list ([v live-var])
+            (when (not (equal? v d))
+              (add-edge! interference-graph v d))))])))
 
 (define (patch-instr instr)
   (match instr
