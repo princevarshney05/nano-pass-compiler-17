@@ -193,49 +193,44 @@
            (if (equal? var (Reg 'rax)) '() (list (Instr 'movq (list (Reg 'rax) var)))))]
     [(Assign var (Prim 'not (list a)))
      (append (if (equal? var a) `() (list (Instr 'movq (list (int-to-imm a) var))))
-             (list (Instr 'xorq (Imm 1) var)))]
-    [(Assign var (Prim 'eq (list e1 e2)))
-      (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1)))
-            (Instr 'sete (Reg 'al))
-            (Instr 'movzbq (list (Reg 'al) var)))]
+             (list (Instr 'xorq (list (Imm 1) var))))]
+    [(Assign var (Prim 'eq? (list e1 e2)))
+     (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1)))
+           (Instr 'set (list 'e (Reg 'al)))
+           (Instr 'movzbq (list (Reg 'al) var)))]
     [(Assign var (Prim '< (list e1 e2)))
-      (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1)))
-            (Instr 'setl (Reg 'al))
-            (Instr 'movzbq (list (Reg 'al) var)))]        
+     (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1)))
+           (Instr 'set (list 'l (Reg 'al)))
+           (Instr 'movzbq (list (Reg 'al) var)))]
     [(Assign var var2) (if (equal? var var2) '() (list (Instr 'movq (list (int-to-imm var2) var))))]))
 
 (define (resolve-select-instructions e)
   (match e
     [(Seq instr rest-seq) (append (instruction-to-x86 instr) (resolve-select-instructions rest-seq))]
-    [(IfStmt (Prim 'eq? (list e1 e2)) (Goto l1) (Goto l2)) 
-      (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1)))
-            (Instr 'je l1)
-            (Instr 'jmp l2))]        
-    [(IfStmt (Prim '< (list e1 e2)) (Goto l1) (Goto l2)) 
-      (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1)))
-            (Instr 'jl (list l1))
-            (Instr 'jmp (list l2)))]
+    [(IfStmt (Prim 'eq? (list e1 e2)) (Goto l1) (Goto l2))
+     (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1))) (JmpIf 'e l1) (Jmp l2))]
+    [(IfStmt (Prim '< (list e1 e2)) (Goto l1) (Goto l2))
+     (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1))) (JmpIf 'l l1) (Jmp l2))]
     [(Return e)
      (define instr (Assign (Reg 'rax) e))
      (append (instruction-to-x86 instr) (list (Jmp 'conclusion)))]))
 
 ;; select-instructions : C0 -> pseudo-x86
 (define (select-instructions p)
+
   (match p
     [(CProgram info body)
-     (let ([frame-1
-            (car
-             body)]) ; removing locals from info in pro gram because we are now storing it in blocks
-       (X86Program (dict-remove info 'locals)
-                   (list (cons (car frame-1)
-                               (Block info (resolve-select-instructions (cdr frame-1)))))))]))
+     (X86Program info
+                 (for/list ([frame body])
+                   (cons (car frame) (Block '() (resolve-select-instructions (cdr frame))))))]))
 
-; (list 
-;   (cons 'start (IfStmt (Prim '< (list (Int 5) (Int 10))) (Goto 'block17869) (Goto 'block17868))) 
-;   (cons 'block17869 (Seq (Assign (Var 'g17863) (Int 10)) (Seq (Assign (Var 'g17864) (Prim 'read '())) (IfStmt (Prim '< (list (Var 'g17864) (Var 'g17863))) (Goto 'block17867) (Goto 'block17868))))) 
-;   (cons 'block17868 (Seq (Assign (Var 'g17862) (Int 5)) (IfStmt (Prim 'eq? (list (Var 'g17862) (Int 5))) (Goto 'block17865) (Goto 'block17866)))) 
-;   (cons 'block17867 (Seq (Assign (Var 'g17862) (Int 10)) (IfStmt (Prim 'eq? (list (Var 'g17862) (Int 5))) (Goto 'block17865) (Goto 'block17866)))) 
-;   (cons 'block17866 (Return (Int 5))) (cons 'block17865 (Return (Int 10))))
+; (list
+;   (cons 'start (IfStmt (Prim '< (list (Int 5) (Int 10))) (Goto 'block17869) (Goto 'block17868)))
+;   (cons 'block17869 (Seq (Assign (Var 'g17863) (Int 10)) (Seq (Assign (Var 'g17864) (Prim 'read '())) (IfStmt (Prim '< (list (Var 'g17864) (Var 'g17863))) (Goto 'block17867) (Goto 'block17868)))))
+;   (cons 'block17868 (Seq (Assign (Var 'g17862) (Int 5)) (IfStmt (Prim 'eq? (list (Var 'g17862) (Int 5))) (Goto 'block17865) (Goto 'block17866))))
+;   (cons 'block17867 (Seq (Assign (Var 'g17862) (Int 10)) (IfStmt (Prim 'eq? (list (Var 'g17862) (Int 5))) (Goto 'block17865) (Goto 'block17866))))
+;   (cons 'block17866 (Return (Int 5)))
+;   (cons 'block17865 (Return (Int 10))))
 ;; assign-homes : pseudo-x86 -> pseudo-x86
 
 (define (create-env lst offset)
@@ -408,8 +403,7 @@
     [(Prim '<= (list e1 e2))
      (define v (gensym))
      (Let v (shrink-exp e1) (Prim 'not (list (Prim '< (list (shrink-exp e2) (Var v))))))]
-    [(Prim '>= (list e1 e2))
-     (Prim 'not (list (Prim '< (list (shrink-exp e1) (shrink-exp e2)))))]
+    [(Prim '>= (list e1 e2)) (Prim 'not (list (Prim '< (list (shrink-exp e1) (shrink-exp e2)))))]
     [(Prim op es)
      (Prim op
            (for/list ([e es])
@@ -429,7 +423,7 @@
     ;; Uncomment the following passes as you finish them.
     ("remove complex opera*" ,remove-complex-opera* ,interp-Lif ,type-check-Lif)
     ("explicate control" ,explicate-control ,interp-Cif ,type-check-Cif)
-     ("instruction selection" ,select-instructions , interp-pseudo-x86-1 )
+    ("instruction selection" ,select-instructions ,interp-pseudo-x86-1)
     ;  ("assign homes" ,assign-homes ,interp-x86-0)
     ;  ("patch instructions" ,patch-instructions ,interp-x86-0)
     ;  ("prelude-and-conclusion" ,prelud  e-and-conclusion ,interp-x86-0)
