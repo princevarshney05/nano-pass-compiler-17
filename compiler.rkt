@@ -2,6 +2,8 @@
 (require racket/set
          racket/stream)
 (require racket/fixnum)
+(require graph)
+(require "graph-printing.rkt")
 (require "interp-Lint.rkt")
 (require "interp-Lvar.rkt")
 (require "interp-Cvar.rkt")
@@ -422,17 +424,25 @@
 ;; Store the graph in info field of the program under the key 'conflicts'
 (define (build-interference-graph p)
   (display "\nBuilding interference graph...\n")
+  (define interference-graph (undirected-graph `()))
   (match p
-    [(X86Program info (list (cons 'start block)))
-      (print block)
-      (display "\nlive-vars: ")
-      (print info)
-    ]
-  )
-  (display "\n")
-  p
+    [(X86Program pinfo (list (cons 'start block)))
+      (match block
+        [(Block binfo instrs)
+            (define local-vars (dict-ref pinfo 'locals))
+            ;loop through each local variable and add it to the graph
+            (for/list ([item local-vars]) (print item)
+              (add-vertex! interference-graph (Var item)))
+            (display "Graph: \n")
+            (print-graph interference-graph)
+            ; (display "\nlocal-vars: ")
+            ; (print local-vars)
+            ; (display "\nPinfo: ")
+            ; (print pinfo)
+            ; (display "\n")
+          ])])
+    p
 )
-
 (define (patch-instr instr)
   (match instr
     [(Instr op (list (Deref r1 o1) (Deref r2 o2)))
