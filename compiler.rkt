@@ -168,6 +168,7 @@
       [else (error "explicate_pred unhandled case" cnd)])))
 
 (define (explicate-control p)
+  (set! basic-blocks '())
   (match p
     [(Program info body)
      (let-values ([(intmd-seq intmd-vars) (explicate_tail body)])
