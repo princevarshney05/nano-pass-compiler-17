@@ -220,7 +220,6 @@
 
 ;; select-instructions : C0 -> pseudo-x86
 (define (select-instructions p)
-
   (match p
     [(CProgram info body)
      (X86Program info
@@ -261,6 +260,7 @@
     ['() '()]
     [(cons x y) (cons (map-instr env x) (map-instrs env y))]))
 
+; local variables are now moved to Program info  and removed from Block Info
 (define (assign-homes p)
   (match p
     [(X86Program info body)
@@ -414,6 +414,23 @@
     )
     ]
   )
+)
+
+
+;; build-interference-graph
+;; write a code to build interference graph
+;; Store the graph in info field of the program under the key 'conflicts'
+(define (build-interference-graph p)
+  (display "\nBuilding interference graph...\n")
+  (match p
+    [(X86Program info (list (cons 'start block)))
+      (print block)
+      (display "\nlive-vars: ")
+      (print info)
+    ]
+  )
+  (display "\n")
+  p
 )
 
 (define (patch-instr instr)
@@ -606,6 +623,7 @@
     ("build cfg" ,build-cfg ,interp-pseudo-x86-1)
     ("print cfg" ,print-cfg ,interp-pseudo-x86-1)
     ("uncover live",uncover-live,interp-pseudo-x86-1)
+    ("build interference graph" ,build-interference-graph ,interp-pseudo-x86-1)
     ;  ("assign homes" ,assign-homes ,interp-x86-0)
     ;  ("patch instructions" ,patch-instructions ,interp-x86-0)
     ;  ("prelude-and-conclusion" ,prelud  e-and-conclusion ,interp-x86-0)
