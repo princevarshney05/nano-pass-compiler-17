@@ -46,7 +46,7 @@
       [(Int n) (Int n)]
       [(Bool t) (Bool t)]
       [(Let x e body)
-       (let ([newenv (dict-set env x (gensym))])
+       (let ([newenv (dict-set env x (gensym x))])
          (Let (dict-ref newenv x) ((uniquify-exp env) e) ((uniquify-exp newenv) body)))]
       [(Prim op es)
        (Prim op
@@ -334,12 +334,12 @@
     [
       (Instr 'cmpq (list A B))
       (define read-set (set-union (valid-set A) (valid-set B)))
-      (define write-set '())
+      (define write-set (set))
       (values read-set write-set)
     ]
     [
       (Callq label n) 
-      (values '() caller-save)
+      (values (set) caller-save)
     ]
     [
       (Instr 'set (list A B))
@@ -349,7 +349,7 @@
     ]
     
     [
-      (error "read-write-sets: Unhandled case")
+      else (error "read-write-sets: Unhandled case")
     ]
   )
 )
@@ -390,8 +390,9 @@
     [
       (cons label (Block info instrlist))
       (define live-vars (get-live-vars instrlist))
-      (dict-set labels->live label (car live-vars))
+      (set! labels->live (dict-set labels->live label (car live-vars)))
       (define new-info (dict-set info 'live-vars (cdr live-vars)))
+      
       ; (display "-----> \n")
       ; (print new-info)
       ; (display "\n")
@@ -408,7 +409,8 @@
     [(X86Program info body) 
     (
       X86Program info 
-        (for/list ([label (tsort (transpose (dict-ref info 'cfg)))]) (uncover-live-block (cons label (dict-ref body label)) ))
+        (for/list ([label (tsort (transpose (dict-ref info 'cfg)))]) 
+        (uncover-live-block (cons label (dict-ref body label)) ))
     )
     ]
   )
