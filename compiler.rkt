@@ -10,6 +10,7 @@
 (require "interp-Lif.rkt")
 (require "interp-Cif.rkt")
 (require "interp.rkt")
+(require "priority_queue.rkt")
 (require "utilities.rkt")
 (require "type-check-Lif.rkt")
 (require "type-check-Cif.rkt")
@@ -466,6 +467,54 @@
           (for/list ([v live-var])
             (when (not (equal? v d))
               (add-edge! interference-graph v d))))])))
+
+
+; Helper function for graph coloring
+(define (color-graph interference-graph all-vars)
+  ; Create a hash to store unavailble colors for each vertex
+  (define unavail-colors #hash())
+  (for/list ([v all-vars])
+    (dict-set unavail-colors v '()))
+  ; Create a hash to store the color of each vertex
+  (define colors #hash())
+  ; initialize the color of each vertex to '-' (uncolored)
+  ; if rax is available, color it to '-1'
+  ; if rsp is available, color it to '-2'
+  (for/list ([v all-vars])
+    (dict-set colors v '-)
+    (when (equal? v (Reg 'rax))
+      (dict-set colors v '-1))
+    (when (equal? v (Reg 'rsp))
+      (dict-set colors v '-2)))
+  ; create a priority queue to store the vertices in order of their degree
+  (define pq (make-pqueue
+    (lambda (v1 v2) 
+      ; get length of unavail-colors for v1
+      (>= 
+        (length (dict-ref unavail-colors v1))
+        (length (dict-ref unavail-colors v2))))))
+  ; add all vertices to the priority queue
+  (for/list ([v all-vars])
+    (pqueue-push! pq v))
+
+  ; TODO - Remaining algorithm
+  ; while the priority queue is not empty
+  ;   pop the next vertex from the queue
+  ;   Calculate the next available color for the vertex
+  ;   Color the vertex with the next available color
+  ;   Add the vertex to the list of colored vertices
+  ;   Add color to list of unavail-colors for each vertex adjacent to the vertex
+  ;   Remove all existing adjacent vertices from the priority queue and add them to the queue
+  ;   If the priority queue is empty, then all vertices have been colored
+)
+
+; function to get the next available color for a vertex
+(define (next-available-color unavail-colors num)
+  ; if num in unavail-colors, return next available color num+1
+  (if (dict-has-key unavail-colors num)
+    (next-available-color unavail-colors (+ num 1))
+    num))
+
 
 (define (patch-instr instr)
   (match instr
