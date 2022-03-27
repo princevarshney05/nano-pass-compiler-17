@@ -420,7 +420,6 @@
 ;; write a code to build interference graph
 ;; Store the graph in info field of the program under the key 'conflicts'
 (define (build-interference-graph p)
-  (display "\nBuilding interference graph...\n")
   (define interference-graph (undirected-graph `()))
   (match p
     [(X86Program pinfo (list (cons 'start block)))
@@ -430,15 +429,8 @@
       (match block
         [(Block binfo instrs)
           (define live-vars (dict-ref binfo 'live-vars))
-          (display "\nlive vars: ")
-          (print live-vars)
-          (display "\n\n")
           (add-interfering-edges instrs live-vars interference-graph)
           ])
-      (display "Done building interference graph.\n")
-      (print interference-graph)
-      (print-dot interference-graph "interference-graph")    
-      (print-graph interference-graph)    
       (define new-pinfo (dict-set pinfo 'conflicts interference-graph))
       (X86Program new-pinfo (list (cons 'start block)))]))
 
