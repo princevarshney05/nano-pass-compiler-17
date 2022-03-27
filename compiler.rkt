@@ -311,10 +311,14 @@
       (define write-set (valid-set A))  
       (values read-set write-set)
     ]
-    ; [
-    ;   (Jmp x)
-    ;   (values (set (Reg 'rax)) (set))
-    ; ]
+    [
+      (Jmp x)
+      (values (dict-ref labels->live x) (set))
+    ]
+    [
+      (JmpIf c x)
+      (values (dict-ref labels->live x) (set))
+    ]
     [
       else
       (values (set) (set))
@@ -322,53 +326,44 @@
   )
 )
 
-(define (get-live-vars info lst)
-  ; (print  "----> ")
-  ; (print lst)
-  ; (display "\n")
+(define (get-live-vars lst)
   (match lst
     [ 
       '()
-      (define new-info (dict-set info 'live-vars (list (set (Reg 'rax) (Reg 'rsp)))))
-      new-info 
+       (list (set))
     ]
     [
       (cons x y)
-      (define new-info (get-live-vars info y))
-      (define live-vars (dict-ref new-info 'live-vars))
+      (define live-vars (get-live-vars y))
       (define last-set (car live-vars))
       (define-values (read-set write-set) (get-read-write-sets x))
-  ;     (print x)
-  ; (display "\n")
-  ;     (print "last set: ")
-  ;     (print last-set)
-  ; (display "\n")
-  ;     (print "write set: ")
-  ;     (print write-set)
-  ; (display "\n")
-  ;     (print "read set: ")
-  ;     (print read-set)
-  ; (display "\n")
+ 
       (define new-set (set-union (set-subtract last-set write-set) read-set))
-  ; (print "new set: ")
-  ; (print new-set)
-  ; (display "\n\n\n")
-      (define new-live-vars (
-        if (null? y)
-        (cons new-set '())
-        (cons new-set live-vars)
-        ))
-      (define newest-info (dict-set info 'live-vars new-live-vars))
-      newest-info
+ 
+      ;;; (define new-live-vars (
+      ;;;   if (null? y)
+      ;;;   (cons new-set '())
+      ;;;   (cons new-set live-vars)
+      ;;;   ))
+      
+      (cons new-set live-vars)
     ]
   )
 )
 
 (define (uncover-live-block p)
+  ;;; (display "inside uncover-block\n")
+  ;;; (display "print p\n")
+  ;;; (print p)
+  ;;; (display "\n")
+  ;;; (print (list? p))
+  ;;; (display "end\n")
   (match p
     [
       (cons label (Block info instrlist))
-      (define new-info (get-live-vars info instrlist))
+      (define live-vars (get-live-vars instrlist))
+      (dict-set labels->live label (car live-vars))
+      (define new-info (dict-set info 'live-vars (cdr live-vars)))
       ; (display "-----> \n")
       ; (print new-info)
       ; (display "\n")
@@ -377,12 +372,15 @@
   )
 )
 
+(define labels->live '())
+
 (define (uncover-live p)
+  (set! labels->live (hash 'conclusion (set (Reg 'rax) (Reg 'rsp))))
   (match p
     [(X86Program info body) 
     (
       X86Program info 
-        (for/list ([item body]) (uncover-live-block item))
+        (for/list ([label (tsort (transpose (dict-ref info 'cfg)))]) (uncover-live-block (cons label (dict-ref body label)) ))
     )
     ]
   )
@@ -540,10 +538,11 @@
         (add-directed-edge! g label label-target)
         (build-cfg-instrs label y (build-cfg-block label-target g bs) bs)]
        [(Jmp label-target)
-        (add-directed-edge! g label label-target)
-        (if (equal? label-target 'conclusion)
-            g
-            (build-cfg-instrs label y (build-cfg-block label-target g bs) bs))]
+        (match label-target
+        ['conclusion g]
+        [else (add-directed-edge! g label label-target) (build-cfg-instrs label y (build-cfg-block label-target g bs) bs)])
+        
+        ]
        [else (build-cfg-instrs label y g bs)])]))
 
 (define (build-cfg-block label g bs)
