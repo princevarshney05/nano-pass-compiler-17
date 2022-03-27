@@ -468,52 +468,74 @@
             (when (not (equal? v d))
               (add-edge! interference-graph v d))))])))
 
+(define (allocate-registers p)
+  (match p
+    [(X86Program info blocks)
+      (define interference-graph (dict-ref info 'conflicts))
+      (color-graph interference-graph (dict-ref info 'locals))])
+    p)
 
 ; Helper function for graph coloring
 (define (color-graph interference-graph all-vars)
-  ; Create a hash to store unavailble colors for each vertex
-  (define unavail-colors #hash())
-  (for/list ([v all-vars])
-    (dict-set unavail-colors v '()))
-  ; Create a hash to store the color of each vertex
-  (define colors #hash())
-  ; initialize the color of each vertex to '-' (uncolored)
-  ; if rax is available, color it to '-1'
-  ; if rsp is available, color it to '-2'
-  (for/list ([v all-vars])
-    (dict-set colors v '-)
-    (when (equal? v (Reg 'rax))
-      (dict-set colors v '-1))
-    (when (equal? v (Reg 'rsp))
-      (dict-set colors v '-2)))
-  ; create a priority queue to store the vertices in order of their degree
-  (define pq (make-pqueue
-    (lambda (v1 v2) 
-      ; get length of unavail-colors for v1
-      (>= 
-        (length (dict-ref unavail-colors v1))
-        (length (dict-ref unavail-colors v2))))))
-  ; add all vertices to the priority queue
-  (for/list ([v all-vars])
-    (pqueue-push! pq v))
+  ; initialising already assigned colors for each var
+  (define already_assigned_colors (make-hash))
+  (for ([var all-vars]) (dict-set! already_assigned_colors var '()))
 
-  ; TODO - Remaining algorithm
-  ; while the priority queue is not empty
-  ;   pop the next vertex from the queue
-  ;   Calculate the next available color for the vertex
-  ;   Color the vertex with the next available color
-  ;   Add the vertex to the list of colored vertices
-  ;   Add color to list of unavail-colors for each vertex adjacent to the vertex
-  ;   Remove all existing adjacent vertices from the priority queue and add them to the queue
-  ;   If the priority queue is empty, then all vertices have been colored
+  ; inserting in priority queue
+  (define pq (make-pqueue 
+    (lambda (a b)      
+      (> (length (dict-ref already_assigned_colors a)) (length (dict-ref already_assigned_colors b))))
+    ))
+
+  (define node_references (make-hash))
+  (for/list ([var all-vars]) (define node_ref (pqueue-push! pq var)) (dict-set! node_references var node_ref))
+
+  (define result (make-hash))
+  ; traverse priority queue
+  (for ([i (pqueue-count pq)])
+    (let ([var (pqueue-pop! pq)])
+      (define cols (dict-ref already_assigned_colors var))
+      (printf "\nname = ~s, val = ~s\n" var cols)
+      (define assigned-color (get-min-color cols 0))
+      (printf "~s \n" assigned-color)
+      (dict-set! result var assigned-color)
+      (
+        for ([node (in-neighbors interference-graph (Var var))]) 
+        (match node
+          [(Var child_var) ; doing only for (Var something) struct
+            (dict-set! already_assigned_colors child_var (set-add (dict-ref already_assigned_colors child_var) assigned-color))
+            (pqueue-decrease-key! pq (dict-ref node_references child_var))
+          ]
+          [_ #f]
+        )
+      )
+    )
+  )
+
+  (dict-set! result 'rax -1)
+  (dict-set! result 'rsp -2)
+ 
+  ; (print node_references)
+
+  result
+  ; (for/list ([e all-vars]) ())
+
+
 )
 
-; function to get the next available color for a vertex
-(define (next-available-color unavail-colors num)
-  ; if num in unavail-colors, return next available color num+1
-  (if (dict-has-key unavail-colors num)
-    (next-available-color unavail-colors (+ num 1))
-    num))
+
+
+(define (get-min-color color-set n)
+  (if (equal? (member n color-set) #f) n (get-min-color color-set (+ n 1)))
+)
+  
+
+; ; function to get the next available color for a vertex
+; (define (next-available-color unavail-colors num)
+;   ; if num in unavail-colors, return next available color num+1
+;   (if (dict-has-key unavail-colors num)
+;     (next-available-color unavail-colors (+ num 1))
+;     num))
 
 
 (define (patch-instr instr)
@@ -707,6 +729,7 @@
     ;;; ("print cfg" ,print-cfg ,interp-pseudo-x86-1)
     ("uncover live",uncover-live,interp-pseudo-x86-1)
     ("build interference graph" ,build-interference-graph ,interp-pseudo-x86-1)
+    ("allocate registers" ,allocate-registers ,interp-x86-0)
     ;  ("assign homes" ,assign-homes ,interp-x86-0)
     ;  ("patch instructions" ,patch-instructions ,interp-x86-0)
     ;  ("prelude-and-conclusion" ,prelud  e-and-conclusion ,interp-x86-0)
