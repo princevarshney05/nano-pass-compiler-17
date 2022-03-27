@@ -7,8 +7,8 @@
 (require "interp.rkt")
 (require "compiler.rkt")
 (require "type-check-Lif.rkt")
-; (debug-level 1)
-; (AST-output-syntax 'concrete-syntax)
+;(debug-level 1)
+;(AST-output-syntax 'concrete-syntax)
 
 ;; all the files in the tests/ directory with extension ".rkt".
 (define all-tests
