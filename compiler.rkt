@@ -304,6 +304,12 @@
       (values read-set write-set)
     ]
     [
+      (Instr 'movzbq (list A B))
+      (define read-set (valid-set A))
+      (define write-set (valid-set B))
+      (values read-set write-set)
+    ]
+    [
       (Instr 'addq (list A B))
       (define read-set (set-union (valid-set A) (valid-set B)))
       (define write-set (valid-set B))
@@ -321,13 +327,34 @@
       (define write-set (valid-set A))  
       (values read-set write-set)
     ]
-    ; [
-    ;   (Jmp x)
-    ;   (values (set (Reg 'rax)) (set))
-    ; ]
     [
-      else
-      (values (set) (set))
+      (Instr 'xorq (list A B))
+      (define read-set (set-union (valid-set A) (valid-set B)))
+      (define write-set (valid-set B))
+      (values read-set write-set)
+    ]
+    [
+      (Instr 'cmpq (list A B))
+      (define read-set (set-union (valid-set A) (valid-set B)))
+      (define write-set '())
+      (values read-set write-set)
+    ]
+    [
+      (Callq label n) 
+      (values '() caller-save)
+    ]
+    [
+      (Instr 'set (list A B))
+      (define read-set (valid-set B))      
+      (define write-set (valid-set B))
+      (values read-set write-set)
+    ]
+    [
+      (or (Jmp x) (JmpIf cnd x)
+      (values '() '())
+    ]
+    [
+      (error "read-write-sets: Unhandled case")
     ]
   )
 )
@@ -439,43 +466,43 @@
 
 
 ; Helper function for graph coloring
-(define (color-graph interference-graph all-vars)
-  ; Create a hash to store unavailble colors for each vertex
-  (define unavail-colors #hash())
-  (for/list ([v all-vars])
-    (dict-set unavail-colors v '()))
-  ; Create a hash to store the color of each vertex
-  (define colors #hash())
-  ; initialize the color of each vertex to '-' (uncolored)
-  ; if rax is available, color it to '-1'
-  ; if rsp is available, color it to '-2'
-  (for/list ([v all-vars])
-    (dict-set colors v '-)
-    (when (equal? v (Reg 'rax))
-      (dict-set colors v '-1))
-    (when (equal? v (Reg 'rsp))
-      (dict-set colors v '-2)))
-  ; create a priority queue to store the vertices in order of their degree
-  (define pq (make-pqueue
-    (lambda (v1 v2) 
-      ; get length of unavail-colors for v1
-      (>= 
-        (length (dict-ref unavail-colors v1))
-        (length (dict-ref unavail-colors v2))))))
-  ; add all vertices to the priority queue
-  (for/list ([v all-vars])
-    (pqueue-push! pq v))
+; (define (color-graph interference-graph all-vars)
+;   ; Create a hash to store unavailble colors for each vertex
+;   (define unavail-colors #hash())
+;   (for/list ([v all-vars])
+;     (dict-set unavail-colors v '()))
+;   ; Create a hash to store the color of each vertex
+;   (define colors #hash())
+;   ; initialize the color of each vertex to '-' (uncolored)
+;   ; if rax is available, color it to '-1'
+;   ; if rsp is available, color it to '-2'
+;   (for/list ([v all-vars])
+;     (dict-set colors v '-)
+;     (when (equal? v (Reg 'rax))
+;       (dict-set colors v '-1))
+;     (when (equal? v (Reg 'rsp))
+;       (dict-set colors v '-2)))
+;   ; create a priority queue to store the vertices in order of their degree
+;   (define pq (make-pqueue
+;     (lambda (v1 v2) 
+;       ; get length of unavail-colors for v1
+;       (>= 
+;         (length (dict-ref unavail-colors v1))
+;         (length (dict-ref unavail-colors v2))))))
+;   ; add all vertices to the priority queue
+;   (for/list ([v all-vars])
+;     (pqueue-push! pq v))
 
-  ; TODO - Remaining algorithm
-  ; while the priority queue is not empty
-  ;   pop the next vertex from the queue
-  ;   Calculate the next available color for the vertex
-  ;   Color the vertex with the next available color
-  ;   Add the vertex to the list of colored vertices
-  ;   Add color to list of unavail-colors for each vertex adjacent to the vertex
-  ;   Remove all existing adjacent vertices from the priority queue and add them to the queue
-  ;   If the priority queue is empty, then all vertices have been colored
-)
+;   ; TODO - Remaining algorithm
+;   ; while the priority queue is not empty
+;   ;   pop the next vertex from the queue
+;   ;   Calculate the next available color for the vertex
+;   ;   Color the vertex with the next available color
+;   ;   Add the vertex to the list of colored vertices
+;   ;   Add color to list of unavail-colors for each vertex adjacent to the vertex
+;   ;   Remove all existing adjacent vertices from the priority queue and add them to the queue
+;   ;   If the priority queue is empty, then all vertices have been colored
+; )
 
 ; function to get the next available color for a vertex
 (define (next-available-color unavail-colors num)
