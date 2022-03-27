@@ -1,14 +1,12 @@
 strict graph {
 %rax;
-x20921;
-y20922;
+%al;
+g20342;
 %rsp;
 %rax -- %rsp;
-x20921 -- y20922;
-x20921 -- %rsp;
-y20922 -- x20921;
-y20922 -- %rsp;
+%al -- %rsp;
+g20342 -- %rsp;
 %rsp -- %rax;
-%rsp -- x20921;
-%rsp -- y20922;
+%rsp -- %al;
+%rsp -- g20342;
 }

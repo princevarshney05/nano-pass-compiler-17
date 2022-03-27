@@ -448,20 +448,24 @@
              'rdi))
 
 (define (map-registers color-map)
+  (define spill-count 0)
   (dict-for-each color-map
                  (lambda (k v)
-                   (if (< v 12)
-                       (dict-set! color-map k (Reg (dict-ref registers-data v)))
-                       (dict-set! color-map k (Deref 'rbp (* (- 8) (- v 11)))))))
-  color-map)
+                   (match (< v 12)
+                      [#t (dict-set! color-map k (Reg (dict-ref registers-data v)))]
+                      [#f 
+                        (dict-set! color-map k (Deref 'rbp (* (- 8) (- v 11))))
+                        (set! spill-count (+ spill-count 1))
+                      ])))
+  (values color-map spill-count))
 
 (define (allocate-registers p)
   (match p
     [(X86Program info body)
      (define interference-graph (dict-ref info 'conflicts))
      (define color-map (color-graph interference-graph (dict-ref info 'locals)))
-     (define color-reg (map-registers color-map))
-     (X86Program info
+     (define-values (color-reg spill-count) (map-registers color-map))
+     (X86Program (dict-set info 'spill-count spill-count)
                  (for/list ([block body])
                    (match block
                      [(cons label (Block binfo instrs))
@@ -524,6 +528,28 @@
 
 (define (patch-instr instr)
   (match instr
+    [(Instr 'movq args)
+     (match args
+       [(list a a) '()]
+       [(list (Deref r1 o1) (Deref r2 o2))
+        (list (Instr 'movq (list (Deref r1 o1) (Reg 'rax)))
+              (Instr 'movq (list (Reg 'rax) (Deref r2 o2))))]
+       [else (list instr)])]
+    [(Instr 'cmpq args)
+     (match args
+       [(list (Deref r1 o1) (Deref r2 o2))
+        (list (Instr 'movq (list (Deref r1 o1) (Reg 'rax)))
+              (Instr 'cmpq (list (Reg 'rax) (Deref r2 o2))))]
+        [(list arg1 (Imm v))
+        (list (Instr 'movq (list (Imm v) (Reg 'rax)))
+              (Instr 'cmpq (list arg1 (Reg 'rax)))) 
+        ]
+       [else (list instr)])]
+    [(Instr 'movzbq (list arg1 (Imm v)))
+    (list (Instr 'movq (list (Imm v) (Reg 'rax)))
+              (Instr 'movzbq (list arg1 (Reg 'rax)))) 
+    ]
+    
     [(Instr op (list (Deref r1 o1) (Deref r2 o2)))
      (list (Instr 'movq (list (Deref r1 o1) (Reg 'rax))) (Instr op (list (Reg 'rax) (Deref r2 o2))))]
     [else (list instr)]))
@@ -532,14 +558,23 @@
   (foldr append '() (map patch-instr lst-instrs)))
 
 ;; patch-instructions : psuedo-x86 -> x86
+;;; (define (patch-instructions p)
+;;;   (match p
+;;;     [(X86Program info body)
+;;;      (X86Program info
+;;;                  (match body
+;;;                    [`((,label . ,block))
+;;;                     (match block
+;;;                       [(Block info instrs) `((,label . ,(Block info (patch-instrs instrs))))])]))]))
+
 (define (patch-instructions p)
   (match p
     [(X86Program info body)
      (X86Program info
-                 (match body
-                   [`((,label . ,block))
-                    (match block
-                      [(Block info instrs) `((,label . ,(Block info (patch-instrs instrs))))])]))]))
+                 (for/list ([block body])
+                   (match block
+                     [(cons label (Block binfo instrs))
+                      (cons label (Block binfo (patch-instrs instrs)))])))]))
 
 (define (generate-main body offset)
   (dict-set body
@@ -565,11 +600,8 @@
 (define (prelude-and-conclusion p)
   (match p
     [(X86Program info body)
-     (define var-list
-       (match (dict-ref body 'start)
-         [(Block info body-2) (dict-ref info 'locals)]))
-     ;(define offset (* 8 (length var-list)))
-     (define offset (mult-16 (* 8 (length var-list))))
+     
+     (define offset (mult-16 (* 8 (dict-ref info 'spill-count))))
      (define body-with-main (generate-main body offset))
      (define body-complete (generate-conclusion body-with-main offset))
      (X86Program info body-complete)]))
@@ -714,7 +746,6 @@
     ("uncover live" ,uncover-live ,interp-pseudo-x86-1)
     ("build interference graph" ,build-interference-graph ,interp-pseudo-x86-1)
     ("allocate registers" ,allocate-registers ,interp-pseudo-x86-1)
-    ;  ("assign homes" ,assign-homes ,interp-x86-0)
-    ;  ("patch instructions" ,patch-instructions ,interp-x86-0)
-    ;  ("prelude-and-conclusion" ,prelud  e-and-conclusion ,interp-x86-0)
+    ("patch instructions" ,patch-instructions ,interp-x86-1)
+    ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-1)
     ))
