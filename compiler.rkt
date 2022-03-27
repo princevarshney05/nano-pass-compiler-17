@@ -1,11 +1,21 @@
 #lang racket
-(require racket/set racket/stream)
+(require racket/set
+         racket/stream)
 (require racket/fixnum)
+(require graph)
+(require "graph-printing.rkt")
 (require "interp-Lint.rkt")
 (require "interp-Lvar.rkt")
 (require "interp-Cvar.rkt")
+(require "interp-Lif.rkt")
+(require "interp-Cif.rkt")
 (require "interp.rkt")
+(require "priority_queue.rkt")
 (require "utilities.rkt")
+(require "type-check-Lif.rkt")
+(require "type-check-Cif.rkt")
+(require graph)
+(require "graph-printing.rkt")
 (provide (all-defined-out))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -26,322 +36,575 @@
   (match e
     [(Program info e) (Program info (flip-exp e))]))
 
-
-;; Next we have the partial evaluation pass described in the book.
-(define (pe-neg r)
-  (match r
-    [(Int n) (Int (fx- 0 n))]
-    [else (Prim '- (list r))]))
-
-(define (pe-add r1 r2)
-  (match* (r1 r2)
-    [((Int n1) (Int n2)) (Int (fx+ n1 n2))]
-    [(_ _) (Prim '+ (list r1 r2))]))
-
-(define (pe-exp e)
-  (match e
-    [(Int n) (Int n)]
-    [(Prim 'read '()) (Prim 'read '())]
-    [(Prim '- (list e1)) (pe-neg (pe-exp e1))]
-    [(Prim '+ (list e1 e2)) (pe-add (pe-exp e1) (pe-exp e2))]))
-
-(define (pe-Lint p)
-  (match p
-    [(Program info e) (Program info (pe-exp e))]))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HW1 Passes
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; environment contains mapping between 
+; environment contains mapping between
 (define (uniquify-exp env)
   (lambda (e)
     (match e
-      [(Var x) ; Variable exists, but we need a one to one mapping from dictionary
-        (Var (dict-ref env x))
-       ]
+      ; Variable exists, but we need a one to one mapping from dictionary
+      [(Var x) (Var (dict-ref env x))]
       [(Int n) (Int n)]
+      [(Bool t) (Bool t)]
       [(Let x e body)
-        (let ([newenv (dict-set env x (gensym))])
-          (Let (dict-ref newenv x) ((uniquify-exp env) e) ((uniquify-exp newenv) body))
-        )
-      ]
+       (let ([newenv (dict-set env x (gensym x))])
+         (Let (dict-ref newenv x) ((uniquify-exp env) e) ((uniquify-exp newenv) body)))]
       [(Prim op es)
-       (Prim op (for/list ([e es]) ((uniquify-exp env) e)))])))
+       (Prim op
+             (for/list ([e es])
+               ((uniquify-exp env) e)))]
+      [(If e1 e2 e3) (If ((uniquify-exp env) e1) ((uniquify-exp env) e2) ((uniquify-exp env) e3))])))
 
 ;; uniquify : R1 -> R1
 (define (uniquify p)
   (match p
     [(Program info e) (Program info ((uniquify-exp '()) e))]))
 
-(define (rco-atom e) 
-    (
-      match e
-      [(Int n) (values (Int n) '())]
-      [(Var x) (values (Var x) '())]
-      [(Let key val body)
-        (define-values (body-atom body-env) (rco-atom body))
-        (values body-atom (cons (list key (rco-exp val)) body-env ))
-      ]
-      [ (Prim '+ (list a b)) 
-        (define-values (a-atom a-list-env) (rco-atom a))
-        (define-values (b-atom b-list-env) (rco-atom b))
-        (define key (gensym))
-
-        (define new-exp (Prim '+ (list a-atom b-atom)))
-        (define new-key-val-list (list (list key new-exp)))
-        (define combined-list-env (append a-list-env b-list-env new-key-val-list))
-        
-        ; (values (Var key) (list (list key (normalise-env-exp combined-list-env new-exp))))
-        (values (Var key) combined-list-env)
-      ]
-      [ (Prim '- (list a)) 
-        (define-values (a-atom a-list-env) (rco-atom a))
-        (define key (gensym))
-
-        (define new-exp (Prim '- (list a-atom)))
-        (define new-key-val-list (list (list key new-exp)))
-        (define combined-list-env (append a-list-env new-key-val-list))
-        
-        (values (Var key) combined-list-env)
-      ]
-      [
-        (Prim 'read '())
-        (define key (gensym))
-        (define new-exp (Prim 'read '()))
-        (define new-key-val-list (list (list key new-exp)))
-        (values (Var key) new-key-val-list )
-      ]
-
-    )
-  )
+(define (rco-atom e)
+  (match e
+    [(Int n) (values (Int n) '())]
+    [(Var x) (values (Var x) '())]
+    [(Bool t) (values (Bool t) '())]
+    [(Let key val body)
+     (define-values (body-atom body-env) (rco-atom body))
+     (values body-atom (cons (list key (rco-exp val)) body-env))]
+    ; It is particularly important to not replace its condition with a temporary variable because
+    ; that would interfere with the generation of high-quality output in the upcoming explicate_control pass
+    [(If e1 e2 e3)
+     (define key (gensym))
+     (values (Var key) `((,key ,(rco-exp e))))]
+    [(Prim op es)
+     (define-values (new-exp new-env) (for/lists (l1 l2) ([e es]) (rco-atom e)))
+     (define key (gensym))
+     (define new-key-val-list (list (list key (Prim op new-exp))))
+     (define combined-list-env (append (append* new-env) new-key-val-list))
+     (values (Var key) combined-list-env)]))
 
 (define (normalise-env-exp env exp)
   (match env
     ['() exp]
     ; [(list (list key val)) exp]
-    [`(,(list key val) . ,rest-list)
-      (Let key val (normalise-env-exp rest-list exp))
-    ] 
-    ))
+    [`(,(list key val) . ,rest-list) (Let key val (normalise-env-exp rest-list exp))]))
 
-
-(define (rco-exp e) 
-    (
-      match e
-      [(Int n) (Int n)]
-      [(Var x) (Var x)]
-      [(Let key val body)
-        (Let key (rco-exp val) (rco-exp body))
-      ]
-      [(Prim '+ (list a b)) 
-        (define-values (a-atom a-list-env) (rco-atom a))
-        (define-values (b-atom b-list-env) (rco-atom b))
-        (define new-exp (Prim '+ (list a-atom b-atom)))
-        (define combined-list-env (append a-list-env b-list-env))
-        (normalise-env-exp combined-list-env new-exp)
-      ]
-      [(Prim '- (list a)) 
-        (define-values (a-atom a-list-env) (rco-atom a))
-        (define new-exp (Prim '- (list a-atom)))
-        (normalise-env-exp a-list-env new-exp)
-      ]
-      [
-        (Prim 'read '())
-        (Prim 'read '())
-      ]
-    )
-  )
+(define (rco-exp e)
+  (match e
+    [(Int n) (Int n)]
+    [(Var x) (Var x)]
+    [(Bool t) (Bool t)]
+    [(Let key val body) (Let key (rco-exp val) (rco-exp body))]
+    ; Should I add rco-exp for e1 too?
+    [(If e1 e2 e3) (If (rco-exp e1) (rco-exp e2) (rco-exp e3))]
+    [(Prim op es)
+     (define-values (new-exp combined-list-env) (for/lists (l1 l2) ([e es]) (rco-atom e)))
+     (normalise-env-exp (append* combined-list-env) (Prim op new-exp))]))
 
 ;; remove-complex-opera* : R1 -> R1
 (define (remove-complex-opera* p)
   (match p
-    [(Program info e) (Program info (rco-exp  e))]
-  ))
+    [(Program info e) (Program info (rco-exp e))]))
 
 ;; explicate-control : R1 -> C0
+
+;; Functoin to create block
+(define basic-blocks '())
+
+(define (create_block tail)
+  (match tail
+    [(Goto label) (Goto label)]
+    [else
+     (let ([label (gensym 'block)])
+       (set! basic-blocks (cons (cons label tail) basic-blocks))
+       (Goto label))]))
 
 (define (explicate_tail e)
   (match e
     [(Var x) (values (Return (Var x)) '())]
     [(Int n) (values (Return (Int n)) '())]
-    [(Let x rhs body) (let*-values ([(intmd-seq1 intmd-vars1) (explicate_tail body)]
-                                    [(intmd-seq2 intmd-vars2) (explicate_assign rhs x intmd-seq1)])
-                                    (values intmd-seq2 (append intmd-vars1 intmd-vars2 `(,x))) )]
-    [(Prim '- (list atom)) (values (Return (Prim '- (list atom))) '())]
-    [(Prim '+ (list atom1 atom2)) (values (Return (Prim '+ (list atom1 atom2))) '())]
-    [(Prim 'read '()) (values (Return (Prim 'read '())) '())]
+    [(Bool b) (values (Return (Bool b)) '())]
+    [(Let x rhs body)
+     (let*-values ([(intmd-seq1 intmd-vars1) (explicate_tail body)]
+                   [(intmd-seq2 intmd-vars2) (explicate_assign rhs x intmd-seq1)])
+       (values intmd-seq2 (append intmd-vars1 intmd-vars2 `(,x))))]
+    [(Prim op es) (values (Return (Prim op es)) '())]
+    [(If cnd^ thn^ els^)
+     (let*-values ([(intmd-seqthn intmd-vars1) (explicate_tail thn^)]
+                   [(intmd-seqels intmd-vars2) (explicate_tail els^)]
+                   [(intmd-seqcnd intmd-vars3) (explicate_pred cnd^ intmd-seqthn intmd-seqels)])
+       (values intmd-seqcnd (remove-duplicates (append intmd-vars1 intmd-vars2 intmd-vars3))))]
     [else (error "explicate_tail unhandled case" e)]))
-
 
 (define (explicate_assign e x cont)
   (match e
     [(Var y) (values (Seq (Assign (Var x) (Var y)) cont) '())]
     [(Int n) (values (Seq (Assign (Var x) (Int n)) cont) '())]
-    [(Let y rhs body) (let*-values ([(intmd-seq1 intmd-vars1) (explicate_assign body x cont)]
-                                    [(intmd-seq2 intmd-vars2) (explicate_assign rhs y intmd-seq1)])
-                                    (values intmd-seq2 (append intmd-vars1 intmd-vars2 `(,y))))]
-    [(Prim '- (list atom)) (values (Seq (Assign (Var x) (Prim '- (list atom))) cont) '())]
-    [(Prim '+ (list atom1 atom2)) (values (Seq (Assign (Var x) (Prim '+  (list atom1 atom2))) cont) '())]
-    [(Prim 'read '()) (values (Seq (Assign (Var x) (Prim 'read '())) cont) '())]
+    [(Bool b) (values (Seq (Assign (Var x) (Bool b)) cont) '())]
+    [(Let y rhs body)
+     (let*-values ([(intmd-seq1 intmd-vars1) (explicate_assign body x cont)]
+                   [(intmd-seq2 intmd-vars2) (explicate_assign rhs y intmd-seq1)])
+       (values intmd-seq2 (append intmd-vars1 intmd-vars2 `(,y))))]
+    [(If cnd^ thn^ els^)
+     (let*-values ([(intmd-seqthn intmd-vars1) (explicate_assign thn^ x cont)]
+                   [(intmd-seqels intmd-vars2) (explicate_assign els^ x cont)]
+                   [(intmd-seqcnd intmd-vars3) (explicate_pred cnd^ intmd-seqthn intmd-seqels)])
+       (values intmd-seqcnd (remove-duplicates (append intmd-vars1 intmd-vars2 intmd-vars3))))]
+    [(Prim op es) (values (Seq (Assign (Var x) (Prim op es)) cont) '())]
     [else (error "explicate_assign unhandled case" e)]))
-  
-(define (explicate-control p)
-  (match p
-    [(Program info body) (let-values ([(intmd-seq intmd-vars) (explicate_tail body)]) 
-                                    ; (CProgram intmd-vars `((start . ,intmd-seq))))]))
-                                    (CProgram (dict-set #hash() 'locals intmd-vars) `((start . ,intmd-seq))))]))
 
+(define (explicate_pred cnd thn els)
+  (let ([thn-block (create_block thn)] [els-block (create_block els)])
+    (match cnd
+      [(Var x) (values (IfStmt (Prim 'eq? (list (Var x) (Bool #t))) thn-block els-block) '())]
+      [(Let x rhs body)
+       (let*-values ([(intmd-seq1 intmd-vars1) (explicate_pred body thn-block els-block)]
+                     [(intmd-seq2 intmd-vars2) (explicate_assign rhs x intmd-seq1)])
+         (values intmd-seq2 (remove-duplicates (append intmd-vars1 intmd-vars2 `(,x)))))]
+      [(Prim 'not (list e)) (values (IfStmt (Prim 'eq? (list e (Bool #t))) els-block thn-block) '())]
+      [(Prim op es)
+       #:when (or (eq? op 'eq?) (eq? op '<))
+       (values (IfStmt (Prim op es) thn-block els-block) '())]
+      [(Bool b) (values (if b thn els) '())]
+      [(If cnd^ thn^ els^)
+       (let*-values ([(intmd-seqthn intmd-vars1) (explicate_pred thn^ thn-block els-block)]
+                     [(intmd-seqels intmd-vars2) (explicate_pred els^ thn-block els-block)]
+                     [(intmd-seqcnd intmd-vars3) (explicate_pred cnd^ intmd-seqthn intmd-seqels)])
+         (values intmd-seqcnd (remove-duplicates (append intmd-vars1 intmd-vars2 intmd-vars3))))]
+      [else (error "explicate_pred unhandled case" cnd)])))
+
+(define (explicate-control p)
+  (set! basic-blocks '())
+  (match p
+    [(Program info body)
+     (let-values ([(intmd-seq intmd-vars) (explicate_tail body)])
+       ; (CProgram intmd-vars `((start . ,intmd-seq))))]))
+       ;(CProgram (dict-set #hash() 'locals intmd-vars) `((start . ,intmd-seq))))]))
+       (CProgram (dict-set #hash() 'locals intmd-vars)
+                 (cons (cons 'start intmd-seq) basic-blocks)))]))
 (define (int-to-imm e)
   (match e
     [(Int a) (Imm a)]
     [(Var a) (Var a)]
-  )
-)
+    [(Bool #t) (Imm 1)]
+    [(Bool #f) (Imm 0)]))
 
 (define (instruction-to-x86 e)
-  (match e 
+  (match e
     [(Assign var (Prim '+ (list a b)))
-      (list 
-        (Instr 'movq (list (int-to-imm a) var))
-        (Instr 'addq (list (int-to-imm b) var))
-      )
-    ]
+     (list (Instr 'movq (list (int-to-imm a) var)) (Instr 'addq (list (int-to-imm b) var)))]
     [(Assign var (Prim '- (list a)))
-      (list 
-        (Instr 'movq (list (int-to-imm a) var))
-        (Instr 'negq (list var))
-      )
-    ]
+     (list (Instr 'movq (list (int-to-imm a) var)) (Instr 'negq (list var)))]
     [(Assign var (Prim 'read '()))
-      (cons (Callq 'read_int 0) ; 0 is a number of arguments
-        (if (equal? var (Reg 'rax)) 
-          '() 
-          (list (Instr 'movq (list (Reg 'rax) var)))))
-    ]
-    [(Assign var var2)
-      (if (equal? var var2) '()
-        (list (Instr 'movq (list (int-to-imm var2) var))))]
-  ))
+     (cons (Callq 'read_int 0) ; 0 is a number of arguments
+           (if (equal? var (Reg 'rax)) '() (list (Instr 'movq (list (Reg 'rax) var)))))]
+    [(Assign var (Prim 'not (list a)))
+     (append (if (equal? var a) `() (list (Instr 'movq (list (int-to-imm a) var))))
+             (list (Instr 'xorq (list (Imm 1) var))))]
+    [(Assign var (Prim 'eq? (list e1 e2)))
+     (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1)))
+           (Instr 'set (list 'e (Reg 'al)))
+           (Instr 'movzbq (list (Reg 'al) var)))]
+    [(Assign var (Prim '< (list e1 e2)))
+     (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1)))
+           (Instr 'set (list 'l (Reg 'al)))
+           (Instr 'movzbq (list (Reg 'al) var)))]
+    [(Assign var var2) (if (equal? var var2) '() (list (Instr 'movq (list (int-to-imm var2) var))))]))
 
 (define (resolve-select-instructions e)
   (match e
-    [(Seq instr rest-seq) 
-      (append (instruction-to-x86 instr) (resolve-select-instructions rest-seq))
-    ]
+    [(Seq instr rest-seq) (append (instruction-to-x86 instr) (resolve-select-instructions rest-seq))]
+    [(IfStmt (Prim 'eq? (list e1 e2)) (Goto l1) (Goto l2))
+     (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1))) (JmpIf 'e l1) (Jmp l2))]
+    [(IfStmt (Prim '< (list e1 e2)) (Goto l1) (Goto l2))
+     (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1))) (JmpIf 'l l1) (Jmp l2))]
     [(Return e)
-      (define instr (Assign (Reg 'rax) e))
-      (append (instruction-to-x86 instr) (list (Jmp 'conclusion)))
-    ]
-    )
-)
+     (define instr (Assign (Reg 'rax) e))
+     (append (instruction-to-x86 instr) (list (Jmp 'conclusion)))]))
 
 ;; select-instructions : C0 -> pseudo-x86
 (define (select-instructions p)
   (match p
-    [
-      (CProgram info body)
-      (let ([frame-1 (car body)]) ; removing locals from info in program because we are now storing it in blocks
-        (X86Program (dict-remove info 'locals) (list  (cons (car frame-1) (Block info (resolve-select-instructions (cdr frame-1))))  ) )
-      )
-    ])
-  )
+    [(CProgram info body)
+     (X86Program info
+                 (for/list ([frame body])
+                   (cons (car frame) (Block '() (resolve-select-instructions (cdr frame))))))]))
 
+; (list
+;   (cons 'start (IfStmt (Prim '< (list (Int 5) (Int 10))) (Goto 'block17869) (Goto 'block17868)))
+;   (cons 'block17869 (Seq (Assign (Var 'g17863) (Int 10)) (Seq (Assign (Var 'g17864) (Prim 'read '())) (IfStmt (Prim '< (list (Var 'g17864) (Var 'g17863))) (Goto 'block17867) (Goto 'block17868)))))
+;   (cons 'block17868 (Seq (Assign (Var 'g17862) (Int 5)) (IfStmt (Prim 'eq? (list (Var 'g17862) (Int 5))) (Goto 'block17865) (Goto 'block17866))))
+;   (cons 'block17867 (Seq (Assign (Var 'g17862) (Int 10)) (IfStmt (Prim 'eq? (list (Var 'g17862) (Int 5))) (Goto 'block17865) (Goto 'block17866))))
+;   (cons 'block17866 (Return (Int 5)))
+;   (cons 'block17865 (Return (Int 10))))
 ;; assign-homes : pseudo-x86 -> pseudo-x86
 
 (define (create-env lst offset)
   (match lst
-  ['() #hash()]
-  [(cons x y) (dict-set (create-env y (- offset 8)) x (Deref 'rbp offset))]))
+    ['() #hash()]
+    [(cons x y) (dict-set (create-env y (- offset 8)) x (Deref 'rbp offset))]))
 
 (define (arg->memory arg env)
   (match arg
-  [(Var x) (dict-ref env x)]
-  [(Imm i) (Imm i)]
-  [(Reg r) (Reg r)]))
+    [(Var x) (dict-ref env x)]
+    [else arg]))
 
 (define (map-instr env instr)
   (match instr
-  [(Instr op lst) (Instr op (for/list ([e lst]) (arg->memory e env)))]
-  [(Jmp label) (Jmp label)]
-  [(Callq label arity) (Callq label arity)]))
+    [(Instr op lst)
+     (Instr op
+            (for/list ([e lst])
+              (arg->memory e env)))]
+
+    [else instr]))
 
 (define (map-instrs env lst)
   (match lst
-  ['() '()]
-  [(cons x y) (cons (map-instr env x) (map-instrs env y))]))
+    ['() '()]
+    [(cons x y) (cons (map-instr env x) (map-instrs env y))]))
 
+; local variables are now moved to Program info  and removed from Block Info
 (define (assign-homes p)
   (match p
-  [(X86Program info body) (X86Program info (match body
-                                          [`((,label . ,block))
-                                            (match block
-                                            [(Block info instrs) 
-                                            `((,label . ,(Block info (map-instrs (create-env (dict-ref info 'locals) -8) instrs))))
-                                            ]) 
-                                          ]))]))
+    [(X86Program info body)
+     (X86Program info
+                 (match body
+                   [`((,label . ,block))
+                    (match block
+                      [(Block info instrs)
+                       `((,label . ,(Block info
+                                           (map-instrs (create-env (dict-ref info 'locals) -8)
+                                                       instrs))))])]))]))
+
+; (X86Program '#hash()
+;   (list
+;     (cons 'start
+;       (Block '#hash((locals . (g10901))) (list (Instr 'movq (list (Imm 10) (Var 'g10901))) (Instr 'movq (list (Var 'g10901) (Reg 'rax))) (Jmp 'conclusion))))))
+
+(define (valid-set x)
+  (match x
+    [(Imm t) (set)]
+    [else (set x)]))
+
+(define (get-read-write-sets instr)
+  (match instr
+    [(Instr 'movq (list A B))
+     (define read-set (valid-set A))
+     (define write-set (valid-set B))
+     (values read-set write-set)]
+    [(Instr 'movzbq (list A B))
+     (define read-set (valid-set A))
+     (define write-set (valid-set B))
+     (values read-set write-set)]
+    [(Instr 'addq (list A B))
+     (define read-set (set-union (valid-set A) (valid-set B)))
+     (define write-set (valid-set B))
+     (values read-set write-set)]
+    [(Instr 'subq (list A B))
+     (define read-set (set-union (valid-set A) (valid-set B)))
+     (define write-set (valid-set B))
+     (values read-set write-set)]
+    [(Instr 'negq (list A))
+     (define read-set (valid-set A))
+     (define write-set (valid-set A))
+     (values read-set write-set)]
+    [(Jmp x) (values (dict-ref labels->live x) (set))]
+    [(JmpIf c x) (values (dict-ref labels->live x) (set))]
+    [(Instr 'xorq (list A B))
+     (define read-set (set-union (valid-set A) (valid-set B)))
+     (define write-set (valid-set B))
+     (values read-set write-set)]
+    [(Instr 'cmpq (list A B))
+     (define read-set (set-union (valid-set A) (valid-set B)))
+     (define write-set (set))
+     (values read-set write-set)]
+    ;;; (values (set) caller-save)
+    [(Callq label n) (values (set) (set))]
+    [(Instr 'set (list A B))
+     (define read-set (valid-set B))
+     (define write-set (valid-set B))
+     (values read-set write-set)]
+
+    [else (error "read-write-sets: Unhandled case")]))
+
+(define (get-live-vars lst)
+  (match lst
+    ['() (list (set))]
+    [(cons x y)
+     (define live-vars (get-live-vars y))
+     (define last-set (car live-vars))
+     (define-values (read-set write-set) (get-read-write-sets x))
+
+     (define new-set (set-union (set-subtract last-set write-set) read-set))
+
+     ;;; (define new-live-vars (
+     ;;;   if (null? y)
+     ;;;   (cons new-set '())
+     ;;;   (cons new-set live-vars)
+     ;;;   ))
+
+     (cons new-set live-vars)]))
+
+(define (uncover-live-block p)
+  ;;; (display "inside uncover-block\n")
+  ;;; (display "print p\n")
+  ;;; (print p)
+  ;;; (display "\n")
+  ;;; (print (list? p))
+  ;;; (display "end\n")
+  (match p
+    [(cons label (Block info instrlist))
+     (define live-vars (get-live-vars instrlist))
+     (set! labels->live (dict-set labels->live label (car live-vars)))
+     (define new-info (dict-set info 'live-vars (cdr live-vars)))
+
+     (cons label (Block new-info instrlist))]))
+
+(define labels->live '())
+
+(define (uncover-live p)
+  (set! labels->live (hash 'conclusion (set (Reg 'rax) (Reg 'rsp))))
+  (match p
+    [(X86Program info body)
+     (X86Program info
+                 (for/list ([label (tsort (transpose (dict-ref info 'cfg)))])
+                   (uncover-live-block (cons label (dict-ref body label)))))]))
+
+;; build-interference-graph
+;; write a code to build interference graph
+;; Store the graph in info field of the program under the key 'conflicts'
+;;; (define (build-interference-graph p)
+;;;   (define interference-graph (undirected-graph `()))
+;;;   (match p
+;;;     [(X86Program pinfo (list (cons 'start block)))
+;;;       (define local-vars (dict-ref pinfo 'locals))
+;;;       ;;; (for/list ([item local-vars]) (print item)
+;;;       ;;;   (add-vertex! interference-graph (Var item)))
+;;;       (match block
+;;;         [(Block binfo instrs)
+;;;           (define live-vars (dict-ref binfo 'live-vars))
+;;;           (add-interfering-edges instrs live-vars interference-graph)
+;;;           ])
+;;;       (define new-pinfo (dict-set pinfo 'conflicts interference-graph))
+;;;       (X86Program new-pinfo (list (cons 'start block)))]))
+
+(define (build-interference-graph p)
+  (define interference-graph (undirected-graph `()))
+  (match p
+    [(X86Program pinfo body)
+     (define local-vars (dict-ref pinfo 'locals))
+     (for/list ([block body])
+       (match block
+         [(cons label (Block binfo instrs))
+          (define live-vars (dict-ref binfo 'live-vars))
+          (add-interfering-edges instrs live-vars interference-graph)]))
+     (print-dot interference-graph "interference-graph")
+
+     (define new-pinfo (dict-set pinfo 'conflicts interference-graph))
+     (X86Program new-pinfo body)]))
+
+(define (add-interfering-edges instrs live-vars interference-graph)
+  (for ([inst instrs] [live-var live-vars])
+    (match inst
+      [(or (Instr 'movq (list s d)) (Instr 'movzbq (list s d)))
+       (for/list ([v live-var])
+         (when (and (not (equal? v s)) (not (equal? v d)))
+           (add-edge! interference-graph v d)))]
+      [_
+       (define-values (_ write-vars) (get-read-write-sets inst))
+       (for/list ([d write-vars])
+         (for/list ([v live-var])
+           (when (not (equal? v d))
+             (add-edge! interference-graph v d))))])))
+
+(define registers-data
+  (dict-set* #hash()
+             -2
+             'rsp
+             -1
+             'rax
+             0
+             'r8
+             1
+             'r9
+             2
+             'r10
+             3
+             'r11
+             4
+             'r12
+             5
+             'r13
+             6
+             'r14
+             7
+             'r15
+             8
+             'rcx
+             9
+             'rdx
+             10
+             'rsi
+             11
+             'rdi))
+
+(define (map-registers color-map)
+  (define spill-count 0)
+  (dict-for-each color-map
+                 (lambda (k v)
+                   (match (< v 12)
+                      [#t (dict-set! color-map k (Reg (dict-ref registers-data v)))]
+                      [#f 
+                        (dict-set! color-map k (Deref 'rbp (* (- 8) (- v 11))))
+                        (set! spill-count (+ spill-count 1))
+                      ])))
+  (values color-map spill-count))
+
+(define (allocate-registers p)
+  (match p
+    [(X86Program info body)
+     (define interference-graph (dict-ref info 'conflicts))
+     (define color-map (color-graph interference-graph (dict-ref info 'locals)))
+     (define-values (color-reg spill-count) (map-registers color-map))
+     (X86Program (dict-set info 'spill-count spill-count)
+                 (for/list ([block body])
+                   (match block
+                     [(cons label (Block binfo instrs))
+                      (cons label (Block binfo (map-instrs color-reg instrs)))])))]))
+
+; Helper function for graph coloring
+(define (color-graph interference-graph all-vars)
+  ; initialising already assigned colors for each var
+  (define already_assigned_colors (make-hash))
+  (for ([var all-vars])
+    (dict-set! already_assigned_colors var '()))
+
+  ; inserting in priority queue
+  (define pq
+    (make-pqueue (lambda (a b)
+                   (> (length (dict-ref already_assigned_colors a))
+                      (length (dict-ref already_assigned_colors b))))))
+
+  (define node_references (make-hash))
+  (for/list ([var all-vars])
+    (define node_ref (pqueue-push! pq var))
+    (dict-set! node_references var node_ref))
+
+  (define result (make-hash))
+  ; traverse priority queue
+  (for ([i (pqueue-count pq)])
+    (let ([var (pqueue-pop! pq)])
+      (define cols (dict-ref already_assigned_colors var))
+
+      (define assigned-color (get-min-color cols 0))
+
+      (dict-set! result var assigned-color)
+      (for ([node (in-neighbors interference-graph (Var var))])
+        (match node
+          [(Var child_var) ; doing only for (Var something) struct
+           (dict-set! already_assigned_colors
+                      child_var
+                      (set-add (dict-ref already_assigned_colors child_var) assigned-color))
+           (pqueue-decrease-key! pq (dict-ref node_references child_var))]
+          [_ #f]))))
+
+  (dict-set! result 'rax -1)
+  (dict-set! result 'rsp -2)
+
+  ; (print node_references)
+
+  result
+  ; (for/list ([e all-vars]) ())
+  )
+
+(define (get-min-color color-set n)
+  (if (equal? (member n color-set) #f) n (get-min-color color-set (+ n 1))))
+
+; ; function to get the next available color for a vertex
+; (define (next-available-color unavail-colors num)
+;   ; if num in unavail-colors, return next available color num+1
+;   (if (dict-has-key unavail-colors num)
+;     (next-available-color unavail-colors (+ num 1))
+;     num))
 
 (define (patch-instr instr)
   (match instr
-  [(Instr op (list (Deref r1 o1) (Deref r2 o2))) 
-    (list (Instr 'movq (list (Deref r1 o1) (Reg 'rax))) (Instr op (list (Reg 'rax) (Deref r2 o2))))]
+    [(Instr 'movq args)
+     (match args
+       [(list a a) '()]
+       [(list (Deref r1 o1) (Deref r2 o2))
+        (list (Instr 'movq (list (Deref r1 o1) (Reg 'rax)))
+              (Instr 'movq (list (Reg 'rax) (Deref r2 o2))))]
+       [else (list instr)])]
+    [(Instr 'cmpq args)
+     (match args
+       [(list (Deref r1 o1) (Deref r2 o2))
+        (list (Instr 'movq (list (Deref r1 o1) (Reg 'rax)))
+              (Instr 'cmpq (list (Reg 'rax) (Deref r2 o2))))]
+        [(list arg1 (Imm v))
+        (list (Instr 'movq (list (Imm v) (Reg 'rax)))
+              (Instr 'cmpq (list arg1 (Reg 'rax)))) 
+        ]
+       [else (list instr)])]
+    [(Instr 'movzbq (list arg1 (Imm v)))
+    (list (Instr 'movq (list (Imm v) (Reg 'rax)))
+              (Instr 'movzbq (list arg1 (Reg 'rax)))) 
+    ]
+    
+    [(Instr op (list (Deref r1 o1) (Deref r2 o2)))
+     (list (Instr 'movq (list (Deref r1 o1) (Reg 'rax))) (Instr op (list (Reg 'rax) (Deref r2 o2))))]
     [else (list instr)]))
 
 (define (patch-instrs lst-instrs)
   (foldr append '() (map patch-instr lst-instrs)))
 
 ;; patch-instructions : psuedo-x86 -> x86
+;;; (define (patch-instructions p)
+;;;   (match p
+;;;     [(X86Program info body)
+;;;      (X86Program info
+;;;                  (match body
+;;;                    [`((,label . ,block))
+;;;                     (match block
+;;;                       [(Block info instrs) `((,label . ,(Block info (patch-instrs instrs))))])]))]))
+
 (define (patch-instructions p)
-(match p
-  [(X86Program info body) (X86Program info (match body
-                                          [`((,label . ,block))
-                                            (match block
-                                              [(Block info instrs) 
-                                              `((,label . ,(Block info (patch-instrs instrs))))
-                                              ]) 
-                                          ]))]))
+  (match p
+    [(X86Program info body)
+     (X86Program info
+                 (for/list ([block body])
+                   (match block
+                     [(cons label (Block binfo instrs))
+                      (cons label (Block binfo (patch-instrs instrs)))])))]))
 
-(define (generate-main body offset) 
-  (dict-set body 'main 
-    (
-      Block '()
-      (list  
-        (Instr 'pushq (list (Reg 'rbp))) 
-        (Instr 'movq (list (Reg 'rsp) (Reg 'rbp))) 
-        (Instr 'subq (list (Imm offset) (Reg 'rsp))) 
-        (Jmp 'start) )
-    )
-  )
-)
+(define (generate-main body offset)
+  (dict-set body
+            'main
+            (Block '()
+                   (list (Instr 'pushq (list (Reg 'rbp)))
+                         (Instr 'movq (list (Reg 'rsp) (Reg 'rbp)))
+                         (Instr 'subq (list (Imm offset) (Reg 'rsp)))
+                         (Jmp 'start)))))
 
-(define (generate-conclusion body offset) 
-  (dict-set body 'conclusion 
-    (Block '()
-      (list 
-        (Instr 'addq (list (Imm offset) (Reg 'rsp))) 
-        (Instr 'popq (list (Reg 'rbp))) 
-        (Retq))
-      )
-  )
-)
+(define (generate-conclusion body offset)
+  (dict-set body
+            'conclusion
+            (Block '()
+                   (list (Instr 'addq (list (Imm offset) (Reg 'rsp)))
+                         (Instr 'popq (list (Reg 'rbp)))
+                         (Retq)))))
 
 (define (mult-16 n)
   (if (= (modulo n 16) 0) n (mult-16 (add1 n))))
 
 ;; prelude-and-conclusion : x86 -> x86
 (define (prelude-and-conclusion p)
-(match p
-  [(X86Program info body) 
-    (define var-list (match (dict-ref body 'start)
-      [
-        (Block info body-2) (dict-ref info 'locals)
-      ])) 
-    ;(define offset (* 8 (length var-list)))
-    (define offset (mult-16 (* 8 (length var-list))))
-    (define body-with-main (generate-main body offset))
-    (define body-complete (generate-conclusion body-with-main offset))
-    (X86Program info body-complete) 
-  ]))
+  (match p
+    [(X86Program info body)
+     
+     (define offset (mult-16 (* 8 (dict-ref info 'spill-count))))
+     (define body-with-main (generate-main body offset))
+     (define body-complete (generate-conclusion body-with-main offset))
+     (X86Program info body-complete)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Bonus
@@ -365,13 +628,18 @@
   (match e
     [(Int n) (Int n)]
     [(Var x) (Var x)]
+    [(Bool t) (Bool t)]
     [(Prim 'read '()) (Prim 'read '())]
     [(Prim '- (list e1)) (pe_neg (pe_exp e1))]
     [(Prim '+ (list (Int e1) e2)) (pe_add (Int e1) (pe_exp e2))]
-    [(Prim '+ (list e1 (Int e2) )) (pe_add (Int e2) (pe_exp e1))]
+    [(Prim '+ (list e1 (Int e2))) (pe_add (Int e2) (pe_exp e1))]
     [(Prim '+ (list e1 e2)) (pe_add (pe_exp e1) (pe_exp e2))]
-    [(Let x e1 e2) (Let x (pe_exp e1) (pe_exp e2))]))
-
+    [(Prim op es)
+     (Prim op
+           (for/list ([e es])
+             (pe_exp e)))]
+    [(Let x e1 e2) (Let x (pe_exp e1) (pe_exp e2))]
+    [(If e1 e2 e3) (If (pe_exp e1) (pe_exp e2) (pe_exp e3))]))
 
 ; Add a pe_intelligent_eval that evaluates the function from left to right
 ; and then evaluates the result
@@ -379,29 +647,105 @@
   (match e
     [(Int n) (Int n)]
     [(Var x) (Var x)]
+    [(Bool t) (Bool t)]
     [(Prim 'read '()) (Prim 'read '())]
     [(Prim '- (list e1)) (pe_neg (pe_intelligent_exp e1))]
-    [(Prim '+ (list (Int e1) (Prim '+ (list (Int e2) e3)))) (pe_add (pe_add (Int e1) (Int e2)) (pe_intelligent_exp e3))]
-    [(Prim '+ (list (Prim '+ (list (Int e1) e2)) (Prim '+ (list (Int e3) e4)))) (pe_add (pe_add (Int e1) (Int e3)) (pe_add (pe_intelligent_exp e2) (pe_intelligent_exp e4)))]
+    [(Prim '+ (list (Int e1) (Prim '+ (list (Int e2) e3))))
+     (pe_add (pe_add (Int e1) (Int e2)) (pe_intelligent_exp e3))]
+    [(Prim '+ (list (Prim '+ (list (Int e1) e2)) (Prim '+ (list (Int e3) e4))))
+     (pe_add (pe_add (Int e1) (Int e3)) (pe_add (pe_intelligent_exp e2) (pe_intelligent_exp e4)))]
     [(Prim '+ (list e1 e2)) (pe_add (pe_intelligent_exp e1) (pe_intelligent_exp e2))]
-    [(Let x e1 e2) (Let x (pe_intelligent_exp e1) (pe_intelligent_exp e2))]))
+    [(Prim op es)
+     (Prim op
+           (for/list ([e es])
+             (pe_intelligent_exp e)))]
+    [(Let x e1 e2) (Let x (pe_intelligent_exp e1) (pe_intelligent_exp e2))]
+    [(If e1 e2 e3) (If (pe_intelligent_exp e1) (pe_intelligent_exp e2) (pe_intelligent_exp e3))]))
 
-(define (pe_Lvar p)
+(define (pe_Lif p)
   (match p
     [(Program '() e) (Program '() (pe_intelligent_exp (pe_exp e)))]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; A2
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; shrink replaces and and or with if
+(define (shrink-exp exp)
+  (match exp
+    [(Prim 'and (list e1 e2)) (If (shrink-exp e1) (shrink-exp e2) (Bool #f))]
+    [(Prim 'or (list e1 e2)) (If (shrink-exp e1) (Bool #t) (shrink-exp e2))]
+    [(Int n) (Int n)]
+    [(Var x) (Var x)]
+    [(Bool t) (Bool t)]
+    [(Let x e1 e2) (Let x (shrink-exp e1) (shrink-exp e2))]
+    [(If e1 e2 e3) (If (shrink-exp e1) (shrink-exp e2) (shrink-exp e3))]
+    [(Prim '- (list e1 e2)) (Prim '+ (list e1 (Prim '- (list e2))))]
+    [(Prim '> (list e1 e2))
+     (define v (gensym))
+     (Let v (shrink-exp e1) (Prim '< (list (shrink-exp e2) (Var v))))]
+    [(Prim '<= (list e1 e2))
+     (define v (gensym))
+     (Let v (shrink-exp e1) (Prim 'not (list (Prim '< (list (shrink-exp e2) (Var v))))))]
+    [(Prim '>= (list e1 e2)) (Prim 'not (list (Prim '< (list (shrink-exp e1) (shrink-exp e2)))))]
+    [(Prim op es)
+     (Prim op
+           (for/list ([e es])
+             (shrink-exp e)))]))
+
+(define (shrink p)
+  (match p
+    [(Program info e) (Program info (shrink-exp e))]))
+
+(define (build-cfg-instrs label instrs g bs)
+  (match instrs
+    ['() g]
+    [(cons x y)
+     (match x
+       [(JmpIf c label-target)
+        (add-directed-edge! g label label-target)
+        (build-cfg-instrs label y (build-cfg-block label-target g bs) bs)]
+       [(Jmp label-target)
+        (match label-target
+          ['conclusion g]
+          [else
+           (add-directed-edge! g label label-target)
+           (build-cfg-instrs label y (build-cfg-block label-target g bs) bs)])]
+       [else (build-cfg-instrs label y g bs)])]))
+
+(define (build-cfg-block label g bs)
+  (match (dict-ref bs label)
+    [(Block info instrs) (build-cfg-instrs label instrs g bs)]))
+
+(define (build-cfg p)
+  (match p
+    [(X86Program info body)
+     (define g (unweighted-graph/directed '()))
+     (add-vertex! g 'start)
+     (X86Program (dict-set info 'cfg (build-cfg-block 'start g body)) body)]))
+
+(define (print-cfg p)
+  (match p
+    [(X86Program info body)
+     (print-graph (dict-ref info 'cfg))
+     p]))
 
 ;; Define the compiler passes to be used by interp-tests and the grader
 ;; Note that your compiler file (the file that defines the passes)
 ;; must be named "compiler.rkt"
 (define compiler-passes
-  `(  ("patial evaluator Lvar" ,pe_Lvar ,interp-Lvar)
-      ("uniquify" ,uniquify ,interp-Lvar)
-     ;; Uncomment the following passes as you finish them.
-     ("remove complex opera*" ,remove-complex-opera* ,interp-Lvar)
-     ("explicate control" ,explicate-control ,interp-Cvar)
-     ("instruction selection" ,select-instructions ,interp-x86-0)
-     ("assign homes" ,assign-homes ,interp-x86-0)
-     ("patch instructions" ,patch-instructions ,interp-x86-0)
-     ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-0)
-     ))
-
+  `(("shrink" ,shrink ,interp-Lif ,type-check-Lif)
+    ("uniquify" ,uniquify ,interp-Lif ,type-check-Lif)
+    ;;; ("patial evaluator Lvar" ,pe_Lif ,interp-Lif ,type-check-Lif)
+    ;; Uncomment the following passes as you finish them.
+    ("remove complex opera*" ,remove-complex-opera* ,interp-Lif ,type-check-Lif)
+    ("explicate control" ,explicate-control ,interp-Cif ,type-check-Cif)
+    ("instruction selection" ,select-instructions ,interp-pseudo-x86-1)
+    ("build cfg" ,build-cfg ,interp-pseudo-x86-1)
+    ;;; ("print cfg" ,print-cfg ,interp-pseudo-x86-1)
+    ("uncover live" ,uncover-live ,interp-pseudo-x86-1)
+    ("build interference graph" ,build-interference-graph ,interp-pseudo-x86-1)
+    ("allocate registers" ,allocate-registers ,interp-pseudo-x86-1)
+    ("patch instructions" ,patch-instructions ,interp-x86-1)
+    ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-1)
+    ))
