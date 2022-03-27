@@ -437,12 +437,27 @@
             (when (not (equal? v d))
               (add-edge! interference-graph v d))))])))
 
+(define registers-data (dict-set* #hash() -2 'rsp -1 'rax  0 'r8 1 'r9 2 'r10  3 'r11 4 'r12  5 'r13 6 'r14 7 'r15 8 'rcx 9 'rdx 10 'rsi 11 'rdi))
+
+(define (map-registers color-map)
+ (dict-for-each color-map
+                 (lambda (k v)
+                   (if (< v 12)
+                   (dict-set! color-map k (Reg (dict-ref registers-data v)))
+                   (dict-set! color-map k (Deref 'rbp (* 8 (- v 11)))))
+                   ))
+  color-map
+)
+
+
 (define (allocate-registers p)
   (match p
     [(X86Program info blocks)
       (define interference-graph (dict-ref info 'conflicts))
-      (color-graph interference-graph (dict-ref info 'locals))])
-    p)
+      (define color-map (color-graph interference-graph (dict-ref info 'locals)))
+      (define color-reg (map-registers color-map))
+      p
+    ]))
 
 ; Helper function for graph coloring
 (define (color-graph interference-graph all-vars)
