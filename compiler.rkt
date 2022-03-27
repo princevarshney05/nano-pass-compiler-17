@@ -202,12 +202,12 @@
              (list (Instr 'xorq (list (Imm 1) var))))]
     [(Assign var (Prim 'eq? (list e1 e2)))
      (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1)))
-           (Instr 'set (list 'e (Reg 'al)))
-           (Instr 'movzbq (list (Reg 'al) var)))]
+           (Instr 'set (list 'e (ByteReg 'al)))
+           (Instr 'movzbq (list (ByteReg 'al) var)))]
     [(Assign var (Prim '< (list e1 e2)))
      (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1)))
-           (Instr 'set (list 'l (Reg 'al)))
-           (Instr 'movzbq (list (Reg 'al) var)))]
+           (Instr 'set (list 'l (ByteReg 'al)))
+           (Instr 'movzbq (list (ByteReg 'al) var)))]
     [(Assign var var2) (if (equal? var var2) '() (list (Instr 'movq (list (int-to-imm var2) var))))]))
 
 (define (resolve-select-instructions e)
