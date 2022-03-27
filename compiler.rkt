@@ -294,6 +294,12 @@
       (values read-set write-set)
     ]
     [
+      (Instr 'movzbq (list A B))
+      (define read-set (valid-set A))
+      (define write-set (valid-set B))
+      (values read-set write-set)
+    ]
+    [
       (Instr 'addq (list A B))
       (define read-set (set-union (valid-set A) (valid-set B)))
       (define write-set (valid-set B))
@@ -320,8 +326,30 @@
       (values (dict-ref labels->live x) (set))
     ]
     [
-      else
-      (values (set) (set))
+      (Instr 'xorq (list A B))
+      (define read-set (set-union (valid-set A) (valid-set B)))
+      (define write-set (valid-set B))
+      (values read-set write-set)
+    ]
+    [
+      (Instr 'cmpq (list A B))
+      (define read-set (set-union (valid-set A) (valid-set B)))
+      (define write-set '())
+      (values read-set write-set)
+    ]
+    [
+      (Callq label n) 
+      (values '() caller-save)
+    ]
+    [
+      (Instr 'set (list A B))
+      (define read-set (valid-set B))      
+      (define write-set (valid-set B))
+      (values read-set write-set)
+    ]
+    
+    [
+      (error "read-write-sets: Unhandled case")
     ]
   )
 )
