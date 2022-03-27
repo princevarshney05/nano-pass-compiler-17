@@ -246,8 +246,7 @@
 (define (arg->memory arg env)
   (match arg
     [(Var x) (dict-ref env x)]
-    [(Imm i) (Imm i)]
-    [(Reg r) (Reg r)]))
+    [else arg]))
 
 (define (map-instr env instr)
   (match instr
@@ -255,8 +254,8 @@
      (Instr op
             (for/list ([e lst])
               (arg->memory e env)))]
-    [(Jmp label) (Jmp label)]
-    [(Callq label arity) (Callq label arity)]))
+
+    [else instr]))
 
 (define (map-instrs env lst)
   (match lst
@@ -276,112 +275,74 @@
                                            (map-instrs (create-env (dict-ref info 'locals) -8)
                                                        instrs))))])]))]))
 
-; (X86Program '#hash() 
-;   (list 
-;     (cons 'start 
+; (X86Program '#hash()
+;   (list
+;     (cons 'start
 ;       (Block '#hash((locals . (g10901))) (list (Instr 'movq (list (Imm 10) (Var 'g10901))) (Instr 'movq (list (Var 'g10901) (Reg 'rax))) (Jmp 'conclusion))))))
 
 (define (valid-set x)
   (match x
     [(Imm t) (set)]
-    [else (set x)]
-  )
-)
+    [else (set x)]))
 
 (define (get-read-write-sets instr)
   (match instr
-    [
-      (Instr 'movq (list A B))
-      (define read-set (valid-set A))
-      (define write-set (valid-set B))
-      (values read-set write-set)
-    ]
-    [
-      (Instr 'movzbq (list A B))
-      (define read-set (valid-set A))
-      (define write-set (valid-set B))
-      (values read-set write-set)
-    ]
-    [
-      (Instr 'addq (list A B))
-      (define read-set (set-union (valid-set A) (valid-set B)))
-      (define write-set (valid-set B))
-      (values read-set write-set)
-    ]
-    [
-      (Instr 'subq (list A B))
-      (define read-set (set-union (valid-set A) (valid-set B)))
-      (define write-set (valid-set B))
-      (values read-set write-set)
-    ]
-    [
-      (Instr 'negq (list A))
-      (define read-set (valid-set A))
-      (define write-set (valid-set A))  
-      (values read-set write-set)
-    ]
-    [
-      (Jmp x)
-      (values (dict-ref labels->live x) (set))
-    ]
-    [
-      (JmpIf c x)
-      (values (dict-ref labels->live x) (set))
-    ]
-    [
-      (Instr 'xorq (list A B))
-      (define read-set (set-union (valid-set A) (valid-set B)))
-      (define write-set (valid-set B))
-      (values read-set write-set)
-    ]
-    [
-      (Instr 'cmpq (list A B))
-      (define read-set (set-union (valid-set A) (valid-set B)))
-      (define write-set (set))
-      (values read-set write-set)
-    ]
-    [
-      (Callq label n) 
-      ;;; (values (set) caller-save)
-      (values (set) (set))
-    ]
-    [
-      (Instr 'set (list A B))
-      (define read-set (valid-set B))      
-      (define write-set (valid-set B))
-      (values read-set write-set)
-    ]
-    
-    [
-      else (error "read-write-sets: Unhandled case")
-    ]
-  )
-)
+    [(Instr 'movq (list A B))
+     (define read-set (valid-set A))
+     (define write-set (valid-set B))
+     (values read-set write-set)]
+    [(Instr 'movzbq (list A B))
+     (define read-set (valid-set A))
+     (define write-set (valid-set B))
+     (values read-set write-set)]
+    [(Instr 'addq (list A B))
+     (define read-set (set-union (valid-set A) (valid-set B)))
+     (define write-set (valid-set B))
+     (values read-set write-set)]
+    [(Instr 'subq (list A B))
+     (define read-set (set-union (valid-set A) (valid-set B)))
+     (define write-set (valid-set B))
+     (values read-set write-set)]
+    [(Instr 'negq (list A))
+     (define read-set (valid-set A))
+     (define write-set (valid-set A))
+     (values read-set write-set)]
+    [(Jmp x) (values (dict-ref labels->live x) (set))]
+    [(JmpIf c x) (values (dict-ref labels->live x) (set))]
+    [(Instr 'xorq (list A B))
+     (define read-set (set-union (valid-set A) (valid-set B)))
+     (define write-set (valid-set B))
+     (values read-set write-set)]
+    [(Instr 'cmpq (list A B))
+     (define read-set (set-union (valid-set A) (valid-set B)))
+     (define write-set (set))
+     (values read-set write-set)]
+    ;;; (values (set) caller-save)
+    [(Callq label n) (values (set) (set))]
+    [(Instr 'set (list A B))
+     (define read-set (valid-set B))
+     (define write-set (valid-set B))
+     (values read-set write-set)]
+
+    [else (error "read-write-sets: Unhandled case")]))
 
 (define (get-live-vars lst)
   (match lst
-    [ 
-      '()
-       (list (set))
-    ]
-    [
-      (cons x y)
-      (define live-vars (get-live-vars y))
-      (define last-set (car live-vars))
-      (define-values (read-set write-set) (get-read-write-sets x))
- 
-      (define new-set (set-union (set-subtract last-set write-set) read-set))
- 
-      ;;; (define new-live-vars (
-      ;;;   if (null? y)
-      ;;;   (cons new-set '())
-      ;;;   (cons new-set live-vars)
-      ;;;   ))
-      
-      (cons new-set live-vars)
-    ]
-  )
-)
+    ['() (list (set))]
+    [(cons x y)
+     (define live-vars (get-live-vars y))
+     (define last-set (car live-vars))
+     (define-values (read-set write-set) (get-read-write-sets x))
+
+     (define new-set (set-union (set-subtract last-set write-set) read-set))
+
+     ;;; (define new-live-vars (
+     ;;;   if (null? y)
+     ;;;   (cons new-set '())
+     ;;;   (cons new-set live-vars)
+     ;;;   ))
+
+     (cons new-set live-vars)]))
 
 (define (uncover-live-block p)
   ;;; (display "inside uncover-block\n")
@@ -391,32 +352,22 @@
   ;;; (print (list? p))
   ;;; (display "end\n")
   (match p
-    [
-      (cons label (Block info instrlist))
-      (define live-vars (get-live-vars instrlist))
-      (set! labels->live (dict-set labels->live label (car live-vars)))
-      (define new-info (dict-set info 'live-vars (cdr live-vars)))
+    [(cons label (Block info instrlist))
+     (define live-vars (get-live-vars instrlist))
+     (set! labels->live (dict-set labels->live label (car live-vars)))
+     (define new-info (dict-set info 'live-vars (cdr live-vars)))
 
-      (cons label (Block new-info instrlist))
-    ]
-  )
-)
+     (cons label (Block new-info instrlist))]))
 
 (define labels->live '())
 
 (define (uncover-live p)
   (set! labels->live (hash 'conclusion (set (Reg 'rax) (Reg 'rsp))))
   (match p
-    [(X86Program info body) 
-    (
-      X86Program info 
-        (for/list ([label (tsort (transpose (dict-ref info 'cfg)))]) 
-        (uncover-live-block (cons label (dict-ref body label)) ))
-    )
-    ]
-  )
-)
-
+    [(X86Program info body)
+     (X86Program info
+                 (for/list ([label (tsort (transpose (dict-ref info 'cfg)))])
+                   (uncover-live-block (cons label (dict-ref body label)))))]))
 
 ;; build-interference-graph
 ;; write a code to build interference graph
@@ -440,110 +391,129 @@
   (define interference-graph (undirected-graph `()))
   (match p
     [(X86Program pinfo body)
-      (define local-vars (dict-ref pinfo 'locals))
-      (for/list ([block body]) 
-        (match block
-          [(cons label (Block binfo instrs))
-            (define live-vars (dict-ref binfo 'live-vars))
-            (add-interfering-edges instrs live-vars interference-graph)]))
-      (print-dot interference-graph "interference-graph")    
+     (define local-vars (dict-ref pinfo 'locals))
+     (for/list ([block body])
+       (match block
+         [(cons label (Block binfo instrs))
+          (define live-vars (dict-ref binfo 'live-vars))
+          (add-interfering-edges instrs live-vars interference-graph)]))
+     (print-dot interference-graph "interference-graph")
 
-      (define new-pinfo (dict-set pinfo 'conflicts interference-graph))
-      (X86Program new-pinfo body)]))
-
-
-
+     (define new-pinfo (dict-set pinfo 'conflicts interference-graph))
+     (X86Program new-pinfo body)]))
 
 (define (add-interfering-edges instrs live-vars interference-graph)
   (for ([inst instrs] [live-var live-vars])
     (match inst
       [(or (Instr 'movq (list s d)) (Instr 'movzbq (list s d)))
-        (for/list ([v live-var])
-          (when (and (not (equal? v s)) (not (equal? v d)))
-            (add-edge! interference-graph v d)))]
-      [_ 
-        (define-values (_ write-vars) (get-read-write-sets inst))
-        (for/list ([d write-vars])
-          (for/list ([v live-var])
-            (when (not (equal? v d))
-              (add-edge! interference-graph v d))))])))
+       (for/list ([v live-var])
+         (when (and (not (equal? v s)) (not (equal? v d)))
+           (add-edge! interference-graph v d)))]
+      [_
+       (define-values (_ write-vars) (get-read-write-sets inst))
+       (for/list ([d write-vars])
+         (for/list ([v live-var])
+           (when (not (equal? v d))
+             (add-edge! interference-graph v d))))])))
 
-(define registers-data (dict-set* #hash() -2 'rsp -1 'rax  0 'r8 1 'r9 2 'r10  3 'r11 4 'r12  5 'r13 6 'r14 7 'r15 8 'rcx 9 'rdx 10 'rsi 11 'rdi))
+(define registers-data
+  (dict-set* #hash()
+             -2
+             'rsp
+             -1
+             'rax
+             0
+             'r8
+             1
+             'r9
+             2
+             'r10
+             3
+             'r11
+             4
+             'r12
+             5
+             'r13
+             6
+             'r14
+             7
+             'r15
+             8
+             'rcx
+             9
+             'rdx
+             10
+             'rsi
+             11
+             'rdi))
 
 (define (map-registers color-map)
- (dict-for-each color-map
+  (dict-for-each color-map
                  (lambda (k v)
                    (if (< v 12)
-                   (dict-set! color-map k (Reg (dict-ref registers-data v)))
-                   (dict-set! color-map k (Deref 'rbp (* 8 (- v 11)))))
-                   ))
-  color-map
-)
-
+                       (dict-set! color-map k (Reg (dict-ref registers-data v)))
+                       (dict-set! color-map k (Deref 'rbp (* (- 8) (- v 11)))))))
+  color-map)
 
 (define (allocate-registers p)
   (match p
-    [(X86Program info blocks)
-      (define interference-graph (dict-ref info 'conflicts))
-      (define color-map (color-graph interference-graph (dict-ref info 'locals)))
-      (define color-reg (map-registers color-map))
-      p
-    ]))
+    [(X86Program info body)
+     (define interference-graph (dict-ref info 'conflicts))
+     (define color-map (color-graph interference-graph (dict-ref info 'locals)))
+     (define color-reg (map-registers color-map))
+     (X86Program info
+                 (for/list ([block body])
+                   (match block
+                     [(cons label (Block binfo instrs))
+                      (cons label (Block binfo (map-instrs color-reg instrs)))])))]))
 
 ; Helper function for graph coloring
 (define (color-graph interference-graph all-vars)
   ; initialising already assigned colors for each var
   (define already_assigned_colors (make-hash))
-  (for ([var all-vars]) (dict-set! already_assigned_colors var '()))
+  (for ([var all-vars])
+    (dict-set! already_assigned_colors var '()))
 
   ; inserting in priority queue
-  (define pq (make-pqueue 
-    (lambda (a b)      
-      (> (length (dict-ref already_assigned_colors a)) (length (dict-ref already_assigned_colors b))))
-    ))
+  (define pq
+    (make-pqueue (lambda (a b)
+                   (> (length (dict-ref already_assigned_colors a))
+                      (length (dict-ref already_assigned_colors b))))))
 
   (define node_references (make-hash))
-  (for/list ([var all-vars]) (define node_ref (pqueue-push! pq var)) (dict-set! node_references var node_ref))
+  (for/list ([var all-vars])
+    (define node_ref (pqueue-push! pq var))
+    (dict-set! node_references var node_ref))
 
   (define result (make-hash))
   ; traverse priority queue
   (for ([i (pqueue-count pq)])
     (let ([var (pqueue-pop! pq)])
       (define cols (dict-ref already_assigned_colors var))
-      (printf "\nname = ~s, val = ~s\n" var cols)
+
       (define assigned-color (get-min-color cols 0))
-      (printf "~s \n" assigned-color)
+
       (dict-set! result var assigned-color)
-      (
-        for ([node (in-neighbors interference-graph (Var var))]) 
+      (for ([node (in-neighbors interference-graph (Var var))])
         (match node
           [(Var child_var) ; doing only for (Var something) struct
-            (dict-set! already_assigned_colors child_var (set-add (dict-ref already_assigned_colors child_var) assigned-color))
-            (pqueue-decrease-key! pq (dict-ref node_references child_var))
-          ]
-          [_ #f]
-        )
-      )
-    )
-  )
+           (dict-set! already_assigned_colors
+                      child_var
+                      (set-add (dict-ref already_assigned_colors child_var) assigned-color))
+           (pqueue-decrease-key! pq (dict-ref node_references child_var))]
+          [_ #f]))))
 
   (dict-set! result 'rax -1)
   (dict-set! result 'rsp -2)
- 
+
   ; (print node_references)
 
   result
   ; (for/list ([e all-vars]) ())
-
-
-)
-
-
+  )
 
 (define (get-min-color color-set n)
-  (if (equal? (member n color-set) #f) n (get-min-color color-set (+ n 1)))
-)
-  
+  (if (equal? (member n color-set) #f) n (get-min-color color-set (+ n 1))))
 
 ; ; function to get the next available color for a vertex
 ; (define (next-available-color unavail-colors num)
@@ -551,7 +521,6 @@
 ;   (if (dict-has-key unavail-colors num)
 ;     (next-available-color unavail-colors (+ num 1))
 ;     num))
-
 
 (define (patch-instr instr)
   (match instr
@@ -706,10 +675,10 @@
         (build-cfg-instrs label y (build-cfg-block label-target g bs) bs)]
        [(Jmp label-target)
         (match label-target
-        ['conclusion g]
-        [else (add-directed-edge! g label label-target) (build-cfg-instrs label y (build-cfg-block label-target g bs) bs)])
-        
-        ]
+          ['conclusion g]
+          [else
+           (add-directed-edge! g label label-target)
+           (build-cfg-instrs label y (build-cfg-block label-target g bs) bs)])]
        [else (build-cfg-instrs label y g bs)])]))
 
 (define (build-cfg-block label g bs)
@@ -721,7 +690,7 @@
     [(X86Program info body)
      (define g (unweighted-graph/directed '()))
      (add-vertex! g 'start)
-     (X86Program (dict-set info 'cfg  (build-cfg-block 'start g body)) body)]))
+     (X86Program (dict-set info 'cfg (build-cfg-block 'start g body)) body)]))
 
 (define (print-cfg p)
   (match p
@@ -742,9 +711,9 @@
     ("instruction selection" ,select-instructions ,interp-pseudo-x86-1)
     ("build cfg" ,build-cfg ,interp-pseudo-x86-1)
     ;;; ("print cfg" ,print-cfg ,interp-pseudo-x86-1)
-    ("uncover live",uncover-live,interp-pseudo-x86-1)
+    ("uncover live" ,uncover-live ,interp-pseudo-x86-1)
     ("build interference graph" ,build-interference-graph ,interp-pseudo-x86-1)
-    ("allocate registers" ,allocate-registers ,interp-x86-0)
+    ("allocate registers" ,allocate-registers ,interp-pseudo-x86-1)
     ;  ("assign homes" ,assign-homes ,interp-x86-0)
     ;  ("patch instructions" ,patch-instructions ,interp-x86-0)
     ;  ("prelude-and-conclusion" ,prelud  e-and-conclusion ,interp-x86-0)
