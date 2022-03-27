@@ -341,7 +341,8 @@
     ]
     [
       (Callq label n) 
-      (values (set) caller-save)
+      ;;; (values (set) caller-save)
+      (values (set) (set))
     ]
     [
       (Instr 'set (list A B))
@@ -419,25 +420,43 @@
 ;; build-interference-graph
 ;; write a code to build interference graph
 ;; Store the graph in info field of the program under the key 'conflicts'
+;;; (define (build-interference-graph p)
+;;;   (define interference-graph (undirected-graph `()))
+;;;   (match p
+;;;     [(X86Program pinfo (list (cons 'start block)))
+;;;       (define local-vars (dict-ref pinfo 'locals))
+;;;       ;;; (for/list ([item local-vars]) (print item)
+;;;       ;;;   (add-vertex! interference-graph (Var item)))
+;;;       (match block
+;;;         [(Block binfo instrs)
+;;;           (define live-vars (dict-ref binfo 'live-vars))
+;;;           (add-interfering-edges instrs live-vars interference-graph)
+;;;           ])
+;;;       (define new-pinfo (dict-set pinfo 'conflicts interference-graph))
+;;;       (X86Program new-pinfo (list (cons 'start block)))]))
+
 (define (build-interference-graph p)
   (define interference-graph (undirected-graph `()))
   (match p
-    [(X86Program pinfo (list (cons 'start block)))
+    [(X86Program pinfo body)
       (define local-vars (dict-ref pinfo 'locals))
-      (for/list ([item local-vars]) (print item)
-        (add-vertex! interference-graph (Var item)))
-      (match block
-        [(Block binfo instrs)
-          (define live-vars (dict-ref binfo 'live-vars))
-          (add-interfering-edges instrs live-vars interference-graph)
-          ])
+      (for/list ([block body]) 
+        (match block
+          [(cons label (Block binfo instrs))
+            (define live-vars (dict-ref binfo 'live-vars))
+            (add-interfering-edges instrs live-vars interference-graph)]))
+      (print-dot interference-graph "interference-graph")    
+
       (define new-pinfo (dict-set pinfo 'conflicts interference-graph))
-      (X86Program new-pinfo (list (cons 'start block)))]))
+      (X86Program new-pinfo body)]))
+
+
+
 
 (define (add-interfering-edges instrs live-vars interference-graph)
   (for ([inst instrs] [live-var live-vars])
     (match inst
-      [(Instr 'movq (list s d))
+      [(or (Instr 'movq (list s d)) (Instr 'movzbq (list s d)))
         (for/list ([v live-var])
           (when (and (not (equal? v s)) (not (equal? v d)))
             (add-edge! interference-graph v d)))]
@@ -630,7 +649,7 @@
 (define compiler-passes
   `(("shrink" ,shrink ,interp-Lif ,type-check-Lif)
     ("uniquify" ,uniquify ,interp-Lif ,type-check-Lif)
-    ("patial evaluator Lvar" ,pe_Lif ,interp-Lif ,type-check-Lif)
+    ;;; ("patial evaluator Lvar" ,pe_Lif ,interp-Lif ,type-check-Lif)
     ;; Uncomment the following passes as you finish them.
     ("remove complex opera*" ,remove-complex-opera* ,interp-Lif ,type-check-Lif)
     ("explicate control" ,explicate-control ,interp-Cif ,type-check-Cif)
