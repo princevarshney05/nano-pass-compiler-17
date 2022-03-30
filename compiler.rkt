@@ -202,12 +202,12 @@
              (list (Instr 'xorq (list (Imm 1) var))))]
     [(Assign var (Prim 'eq? (list e1 e2)))
      (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1)))
-           (Instr 'set (list 'e (ByteReg 'al)))
-           (Instr 'movzbq (list (ByteReg 'al) var)))]
+           (Instr 'set (list 'e (Reg 'al)))
+           (Instr 'movzbq (list (Reg 'al) var)))]
     [(Assign var (Prim '< (list e1 e2)))
      (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1)))
-           (Instr 'set (list 'l (ByteReg 'al)))
-           (Instr 'movzbq (list (ByteReg 'al) var)))]
+           (Instr 'set (list 'l (Reg 'al)))
+           (Instr 'movzbq (list (Reg 'al) var)))]
     [(Assign var var2) (if (equal? var var2) '() (list (Instr 'movq (list (int-to-imm var2) var))))]))
 
 (define (resolve-select-instructions e)
@@ -283,7 +283,11 @@
 (define (valid-set x)
   (match x
     [(Imm t) (set)]
-    [else (set x)]))
+    [(ByteReg t) (set (byte-reg->full-reg t))]
+    [(Var x) (set x)]
+    [(Reg r) (set r)]
+    [(Deref reg int) (set reg)]
+    [(Global _) (set)]))
 
 (define (get-read-write-sets instr)
   (match instr
@@ -318,7 +322,7 @@
      (define write-set (set))
      (values read-set write-set)]
     ;;; (values (set) caller-save)
-    [(Callq label n) (values (set) (set))]
+    [(Callq label n) (values (list->set (take callee-save n)) caller-save)]
     [(Instr 'set (list A B))
      (define read-set (valid-set B))
      (define write-set (valid-set B))
@@ -449,23 +453,27 @@
 
 (define (map-registers color-map)
   (define spill-count 0)
+  (define used-callee (set))
   (dict-for-each color-map
                  (lambda (k v)
                    (match (< v 12)
-                      [#t (dict-set! color-map k (Reg (dict-ref registers-data v)))]
+                      [#t 
+                        (dict-set! color-map k (Reg (dict-ref registers-data v)))
+                        (set! used-callee (set-add used-callee (dict-ref registers-data v)))
+                      ]
                       [#f 
                         (dict-set! color-map k (Deref 'rbp (* (- 8) (- v 11))))
                         (set! spill-count (+ spill-count 1))
                       ])))
-  (values color-map spill-count))
+  (values color-map spill-count (set-intersect callee-save used-callee)))
 
 (define (allocate-registers p)
   (match p
     [(X86Program info body)
      (define interference-graph (dict-ref info 'conflicts))
      (define color-map (color-graph interference-graph (dict-ref info 'locals)))
-     (define-values (color-reg spill-count) (map-registers color-map))
-     (X86Program (dict-set info 'spill-count spill-count)
+     (define-values (color-reg spill-count used-callee) (map-registers color-map))
+     (X86Program (dict-set (dict-set info 'spill-count spill-count) 'used-callee used-callee)
                  (for/list ([block body])
                    (match block
                      [(cons label (Block binfo instrs))
@@ -576,22 +584,26 @@
                      [(cons label (Block binfo instrs))
                       (cons label (Block binfo (patch-instrs instrs)))])))]))
 
-(define (generate-main body offset)
+
+
+(define (generate-main body offset used-callee)
   (dict-set body
             'main
             (Block '()
-                   (list (Instr 'pushq (list (Reg 'rbp)))
-                         (Instr 'movq (list (Reg 'rsp) (Reg 'rbp)))
-                         (Instr 'subq (list (Imm offset) (Reg 'rsp)))
-                         (Jmp 'start)))))
+                   (append (list (Instr 'pushq (list (Reg 'rbp)))
+                         (Instr 'movq (list (Reg 'rsp) (Reg 'rbp))))
+                         (for/list ([reg used-callee]) (Instr 'pushq (list (Reg reg))))
+                         (list (Instr 'subq (list (Imm offset) (Reg 'rsp)))
+                         (Jmp 'start))))))
 
-(define (generate-conclusion body offset)
+(define (generate-conclusion body offset rev-used-callee)
   (dict-set body
             'conclusion
             (Block '()
-                   (list (Instr 'addq (list (Imm offset) (Reg 'rsp)))
-                         (Instr 'popq (list (Reg 'rbp)))
-                         (Retq)))))
+                   (append (list (Instr 'addq (list (Imm offset) (Reg 'rsp))))
+                   (for/list ([reg rev-used-callee]) (Instr 'popq (list (Reg reg))))
+                         (list (Instr 'popq (list (Reg 'rbp)))
+                         (Retq))))))
 
 (define (mult-16 n)
   (if (= (modulo n 16) 0) n (mult-16 (add1 n))))
@@ -601,9 +613,11 @@
   (match p
     [(X86Program info body)
      
-     (define offset (mult-16 (* 8 (dict-ref info 'spill-count))))
-     (define body-with-main (generate-main body offset))
-     (define body-complete (generate-conclusion body-with-main offset))
+     (define used-callee (set->list (dict-ref info 'used-callee)))
+     (define offset (- (mult-16 (+ (* 8 (dict-ref info 'spill-count)) (* 8 (length used-callee)))) (* 8 (length used-callee))))
+     
+     (define body-with-main (generate-main body offset used-callee))
+     (define body-complete (generate-conclusion body-with-main offset (reverse used-callee)))
      (X86Program info body-complete)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
