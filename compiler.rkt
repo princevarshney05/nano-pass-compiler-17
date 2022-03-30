@@ -202,12 +202,12 @@
              (list (Instr 'xorq (list (Imm 1) var))))]
     [(Assign var (Prim 'eq? (list e1 e2)))
      (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1)))
-           (Instr 'set (list 'e (Reg 'al)))
-           (Instr 'movzbq (list (Reg 'al) var)))]
+           (Instr 'set (list 'e (ByteReg 'al)))
+           (Instr 'movzbq (list (ByteReg 'al) var)))]
     [(Assign var (Prim '< (list e1 e2)))
      (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1)))
-           (Instr 'set (list 'l (Reg 'al)))
-           (Instr 'movzbq (list (Reg 'al) var)))]
+           (Instr 'set (list 'l (ByteReg 'al)))
+           (Instr 'movzbq (list (ByteReg 'al) var)))]
     [(Assign var var2) (if (equal? var var2) '() (list (Instr 'movq (list (int-to-imm var2) var))))]))
 
 (define (resolve-select-instructions e)
@@ -283,7 +283,7 @@
 (define (valid-set x)
   (match x
     [(Imm t) (set)]
-    ; [(ByteReg t) (set (byte-reg->full-reg t))]
+    [(ByteReg t) (set (byte-reg->full-reg t))]
     [else (set x)]))
 
 (define (get-read-write-sets instr)
@@ -409,10 +409,10 @@
       [(or (Instr 'movq (list s d)) (Instr 'movzbq (list s d)))
        (for/list ([v live-var])
          (when (and (and (not (equal? v s)) (not (equal? v d))) (not (has-edge? interference-graph v d)))
-              (display "\n----\nAdding Edge: ")
-              (display v)
-              (display " -> ")
-              (display d)
+              ; (display "\n----\nAdding Edge: ")
+              ; (display v)
+              ; (display " -> ")
+              ; (display d)
            (add-edge! interference-graph v d)))]
       [_
        (define-values (_ write-vars) (get-read-write-sets inst))
@@ -462,6 +462,37 @@
              11
              'rdi))
 
+(define reg-to-num
+  (dict-set* #hash()
+             'rsp
+             -2
+             'rax
+             -1
+             'r8
+             0
+             'r9
+             1
+             'r10
+             2
+             'r11
+             3
+             'r12
+             4
+             'r13
+             5
+             'r14
+             6
+             'r15
+             7
+             'rcx
+             8
+             'rdx
+             9
+             'rsi
+             10
+             'rdi
+             11))
+
 (define (map-registers color-map)
   (define spill-count 0)
   (define used-callee (set))
@@ -492,11 +523,26 @@
 
 ; Helper function for graph coloring
 (define (color-graph interference-graph all-vars)
+
+  (define regs-in-graph (filter Reg? (get-vertices interference-graph)))
+  ; (print "-----")
+  ; (print regs-in-graph)
   ; initialising already assigned colors for each var
   (define already_assigned_colors (make-hash))
   (for ([var all-vars])
     (dict-set! already_assigned_colors var '()))
 
+  (for ([reg regs-in-graph])
+    (for ([node (in-neighbors interference-graph reg)])
+      (match node
+          [(Var child_var) 
+           (dict-set! already_assigned_colors
+                      child_var
+                      (set-add (dict-ref already_assigned_colors child_var) (dict-ref reg-to-num (match reg [(Reg r) r]))))
+          ]
+          [_ #f])
+    )
+    )
   ; inserting in priority queue
   (define pq
     (make-pqueue (lambda (a b)
@@ -526,8 +572,8 @@
            (pqueue-decrease-key! pq (dict-ref node_references child_var))]
           [_ #f]))))
 
-  (dict-set! result 'rax -1)
-  (dict-set! result 'rsp -2)
+  ; (dict-set! result 'rax -1)
+  ; (dict-set! result 'rsp -2)
 
   ; (print node_references)
 
