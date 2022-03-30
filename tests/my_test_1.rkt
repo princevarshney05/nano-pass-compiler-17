@@ -16,7 +16,7 @@
 ;;; (+ z (- y)))))))
 
 ; (+ (+ (read) 1) (+ (read) 1))
-; // 12 nested lets a-l variables
+; // 12 nested lets a-l variables - Spilling Variables - Ex 15 - 1
 (let ([a 1]) 
     (+ a (let ([b 2]) 
             (+ b (let ([c 3])
