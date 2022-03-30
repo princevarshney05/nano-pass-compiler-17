@@ -283,11 +283,8 @@
 (define (valid-set x)
   (match x
     [(Imm t) (set)]
-    [(ByteReg t) (set (byte-reg->full-reg t))]
-    [(Var x) (set x)]
-    [(Reg r) (set r)]
-    [(Deref reg int) (set reg)]
-    [(Global _) (set)]))
+    ; [(ByteReg t) (set (byte-reg->full-reg t))]
+    [else (set x)]))
 
 (define (get-read-write-sets instr)
   (match instr
@@ -322,7 +319,7 @@
      (define write-set (set))
      (values read-set write-set)]
     ;;; (values (set) caller-save)
-    [(Callq label n) (values (list->set (take callee-save n)) caller-save)]
+    [(Callq label n) (values (list->set (take callee-save n )) (list->set (map (lambda (r) (Reg r)) (set->list caller-save))))]
     [(Instr 'set (list A B))
      (define read-set (valid-set B))
      (define write-set (valid-set B))
@@ -411,13 +408,27 @@
     (match inst
       [(or (Instr 'movq (list s d)) (Instr 'movzbq (list s d)))
        (for/list ([v live-var])
-         (when (and (not (equal? v s)) (not (equal? v d)))
+         (when (and (and (not (equal? v s)) (not (equal? v d))) (not (has-edge? interference-graph v d)))
+              (display "\n----\nAdding Edge: ")
+              (display v)
+              (display " -> ")
+              (display d)
            (add-edge! interference-graph v d)))]
       [_
        (define-values (_ write-vars) (get-read-write-sets inst))
+      ;  Print inst and write-vars
+      ; (display "\n======\ninst: ")
+      ; (print inst)
+      ; (display "\nwrite-vars: ")
+      ; (print write-vars)
+      ; (display "\n======\n")
        (for/list ([d write-vars])
          (for/list ([v live-var])
-           (when (not (equal? v d))
+           (when (not (or (equal? v d) (has-edge? interference-graph v d)))
+              ; (display "\n----\nAdding Edge: ")
+              ; (display v)
+              ; (display " -> ")
+              ; (display d)
              (add-edge! interference-graph v d))))])))
 
 (define registers-data
