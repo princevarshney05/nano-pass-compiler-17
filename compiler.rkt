@@ -431,7 +431,7 @@
               ; (display d)
              (add-edge! interference-graph v d))))])))
 
-(define registers-data
+(define num-to-reg
   (dict-set* #hash()
              -2
              'rsp
@@ -498,13 +498,19 @@
   (define used-callee (set))
   (dict-for-each color-map
                  (lambda (k v)
+                   (when (< v 12)
+                        (set! used-callee (set-add used-callee (dict-ref num-to-reg v)))
+                    )))
+  (set! used-callee (set-intersect callee-save used-callee))
+  (dict-for-each color-map
+                 (lambda (k v)
                    (match (< v 12)
                       [#t 
-                        (dict-set! color-map k (Reg (dict-ref registers-data v)))
-                        (set! used-callee (set-add used-callee (dict-ref registers-data v)))
+                        (dict-set! color-map k (Reg (dict-ref num-to-reg v)))
+                        ; (set! used-callee (set-add used-callee (dict-ref num-to-reg v)))
                       ]
                       [#f 
-                        (dict-set! color-map k (Deref 'rbp (* (- 8) (- v 11))))
+                        (dict-set! color-map k (Deref 'rbp (- (* (- 8) (- v 11)) (* 8 (set-count used-callee)))))
                         (set! spill-count (+ spill-count 1))
                       ])))
   (values color-map spill-count (set-intersect callee-save used-callee)))
