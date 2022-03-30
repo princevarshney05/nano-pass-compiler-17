@@ -1,12 +1,12 @@
 strict graph {
-%rax;
-%al;
-g20342;
-%rsp;
-%rax -- %rsp;
-%al -- %rsp;
-g20342 -- %rsp;
-%rsp -- %rax;
-%rsp -- %al;
-%rsp -- g20342;
+#<Reg: rax>;
+#<Reg: rsp>;
+rax;
+#<Var: g20404>;
+#<Reg: rax> -- #<Reg: rsp>;
+#<Reg: rsp> -- #<Var: g20404>;
+#<Reg: rsp> -- rax;
+#<Reg: rsp> -- #<Reg: rax>;
+rax -- #<Reg: rsp>;
+#<Var: g20404> -- #<Reg: rsp>;
 }

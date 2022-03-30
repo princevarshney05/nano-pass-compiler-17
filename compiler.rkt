@@ -164,7 +164,7 @@
       [(Prim op es)
        #:when (or (eq? op 'eq?) (eq? op '<))
        (values (IfStmt (Prim op es) thn-block els-block) '())]
-      [(Bool b) (values (if b thn els) '())]
+      [(Bool b) (values (if cnd thn els) '())]
       [(If cnd^ thn^ els^)
        (let*-values ([(intmd-seqthn intmd-vars1) (explicate_pred thn^ thn-block els-block)]
                      [(intmd-seqels intmd-vars2) (explicate_pred els^ thn-block els-block)]
@@ -217,6 +217,7 @@
      (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1))) (JmpIf 'e l1) (Jmp l2))]
     [(IfStmt (Prim '< (list e1 e2)) (Goto l1) (Goto l2))
      (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1))) (JmpIf 'l l1) (Jmp l2))]
+    [(Goto label) (list (Jmp label))]
     [(Return e)
      (define instr (Assign (Reg 'rax) e))
      (append (instruction-to-x86 instr) (list (Jmp 'conclusion)))]))
