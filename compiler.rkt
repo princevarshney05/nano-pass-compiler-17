@@ -153,24 +153,25 @@
     [else (error "explicate_assign unhandled case" e)]))
 
 (define (explicate_pred cnd thn els)
-  (let ([thn-block (create_block thn)] [els-block (create_block els)])
-    (match cnd
-      [(Var x) (values (IfStmt (Prim 'eq? (list (Var x) (Bool #t))) thn-block els-block) '())]
-      [(Let x rhs body)
-       (let*-values ([(intmd-seq1 intmd-vars1) (explicate_pred body thn-block els-block)]
-                     [(intmd-seq2 intmd-vars2) (explicate_assign rhs x intmd-seq1)])
-         (values intmd-seq2 (remove-duplicates (append intmd-vars1 intmd-vars2 `(,x)))))]
-      [(Prim 'not (list e)) (values (IfStmt (Prim 'eq? (list e (Bool #t))) els-block thn-block) '())]
-      [(Prim op es)
-       #:when (or (eq? op 'eq?) (eq? op '<))
-       (values (IfStmt (Prim op es) thn-block els-block) '())]
-      [(Bool b) (values (if cnd thn els) '())]
-      [(If cnd^ thn^ els^)
-       (let*-values ([(intmd-seqthn intmd-vars1) (explicate_pred thn^ thn-block els-block)]
-                     [(intmd-seqels intmd-vars2) (explicate_pred els^ thn-block els-block)]
-                     [(intmd-seqcnd intmd-vars3) (explicate_pred cnd^ intmd-seqthn intmd-seqels)])
-         (values intmd-seqcnd (remove-duplicates (append intmd-vars1 intmd-vars2 intmd-vars3))))]
-      [else (error "explicate_pred unhandled case" cnd)])))
+  (match cnd
+    [(Var x) (values (IfStmt (Prim 'eq? (list (Var x) (Bool #t))) (create_block thn) (create_block els)) '())]
+    [(Let x rhs body)
+      (let*-values ([(intmd-seq1 intmd-vars1) (explicate_pred body (create_block thn) (create_block els))]
+                    [(intmd-seq2 intmd-vars2) (explicate_assign rhs x intmd-seq1)])
+        (values intmd-seq2 (remove-duplicates (append intmd-vars1 intmd-vars2 `(,x)))))]
+    [(Prim 'not (list e)) (values (IfStmt (Prim 'eq? (list e (Bool #t))) (create_block els) (create_block thn)) '())]
+    [(Prim op es)
+      #:when (or (eq? op 'eq?) (eq? op '<))
+      (values (IfStmt (Prim op es) (create_block thn) (create_block els)) '())]
+    [(Bool b) (values (IfStmt (Prim 'eq? (list cnd (Bool #t))) (create_block thn) (create_block els)) '())]
+    [(If cnd^ thn^ els^)
+      (define thn-block (create_block thn))
+      (define els-block (create_block els))
+      (let*-values ([(intmd-seqthn intmd-vars1) (explicate_pred thn^ thn-block els-block)]
+                    [(intmd-seqels intmd-vars2) (explicate_pred els^ thn-block els-block)]
+                    [(intmd-seqcnd intmd-vars3) (explicate_pred cnd^ intmd-seqthn intmd-seqels)])
+        (values intmd-seqcnd (remove-duplicates (append intmd-vars1 intmd-vars2 intmd-vars3))))]
+    [else (error "explicate_pred unhandled case" cnd)]))
 
 (define (explicate-control p)
   (set! basic-blocks '())
@@ -394,6 +395,9 @@
   (match p
     [(X86Program pinfo body)
      (define local-vars (dict-ref pinfo 'locals))
+     (display "\n====\nbody: \n")
+     (print body)
+     (display "\n")
      (for/list ([block body])
        (match block
          [(cons label (Block binfo instrs))
@@ -405,6 +409,9 @@
      (X86Program new-pinfo body)]))
 
 (define (add-interfering-edges instrs live-vars interference-graph)
+  ; (display "\n====\ninstrs: \n")
+  ; (print instrs)
+  ; (display "\n")
   (for ([inst instrs] [live-var live-vars])
     (match inst
       [(or (Instr 'movq (list s d)) (Instr 'movzbq (list s d)))
@@ -820,7 +827,7 @@
     ("explicate control" ,explicate-control ,interp-Cif ,type-check-Cif)
     ("instruction selection" ,select-instructions ,interp-pseudo-x86-1)
     ("build cfg" ,build-cfg ,interp-pseudo-x86-1)
-    ;;; ("print cfg" ,print-cfg ,interp-pseudo-x86-1)
+    ("print cfg" ,print-cfg ,interp-pseudo-x86-1)
     ("uncover live" ,uncover-live ,interp-pseudo-x86-1)
     ("build interference graph" ,build-interference-graph ,interp-pseudo-x86-1)
     ("allocate registers" ,allocate-registers ,interp-pseudo-x86-1)
