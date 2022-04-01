@@ -533,7 +533,7 @@
   (match p
     [(X86Program info body)
      (define interference-graph (dict-ref info 'conflicts))
-     (define color-map (color-graph interference-graph (dict-ref info 'locals)))
+     (define color-map (color-graph interference-graph))
      (define-values (color-reg spill-count used-callee) (map-registers color-map))
      (X86Program (dict-set (dict-set info 'spill-count spill-count) 'used-callee used-callee)
                  (for/list ([block body])
@@ -542,8 +542,8 @@
                       (cons label (Block binfo (map-instrs color-reg instrs)))])))]))
 
 ; Helper function for graph coloring
-(define (color-graph interference-graph all-vars)
-
+(define (color-graph interference-graph)
+  (define all-vars (for/list ([node (filter Var? (get-vertices interference-graph))]) (match node [(Var x) x])))
   (define regs-in-graph (filter Reg? (get-vertices interference-graph)))
   ; (print "-----")
   ; (print regs-in-graph)
