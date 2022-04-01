@@ -395,9 +395,9 @@
   (match p
     [(X86Program pinfo body)
      (define local-vars (dict-ref pinfo 'locals))
-     (display "\n====\nbody: \n")
-     (print body)
-     (display "\n")
+    ;  (display "\n====\nbody: \n")
+    ;  (print body)
+    ;  (display "\n")
      (for/list ([block body])
        (match block
          [(cons label (Block binfo instrs))
@@ -827,7 +827,7 @@
     ("explicate control" ,explicate-control ,interp-Cif ,type-check-Cif)
     ("instruction selection" ,select-instructions ,interp-pseudo-x86-1)
     ("build cfg" ,build-cfg ,interp-pseudo-x86-1)
-    ("print cfg" ,print-cfg ,interp-pseudo-x86-1)
+    ; ("print cfg" ,print-cfg ,interp-pseudo-x86-1)
     ("uncover live" ,uncover-live ,interp-pseudo-x86-1)
     ("build interference graph" ,build-interference-graph ,interp-pseudo-x86-1)
     ("allocate registers" ,allocate-registers ,interp-pseudo-x86-1)
