@@ -17,16 +17,29 @@
 
 ; (+ (+ (read) 1) (+ (read) 1))
 ; // 12 nested lets a-l variables - Spilling Variables - Ex 15 - 1
-(let ([a 1]) 
-    (+ a (let ([b 2]) 
-            (+ b (let ([c 3])
-                (+ c (let ([d 4])
-                    (+ d (let ([e 5])
-                        (+ e (let ([f 6])
-                            (+ f (let ([g 7])
-                                (+ g (let ([h 8])
-                                    (+ h (let ([i 9])
-                                        (+ i (let ([j 10])
-                                            (+ j (let ([k 11])
-                                                (+ k (let ([l 12])
-                                                    (+ l (let ([m 13]) (+ l m))))))))))))))))))))))))))
+(let ([a 1])
+  (+ a
+     (let ([b 2])
+       (+ b
+          (let ([c 3])
+            (+ c
+               (let ([d 4])
+                 (+ d
+                    (let ([e 5])
+                      (+ e
+                         (let ([f 6])
+                           (+ f
+                              (let ([g 7])
+                                (+ g
+                                   (let ([h 8])
+                                     (+ h
+                                        (let ([i 9])
+                                          (+ i
+                                             (let ([j 10])
+                                               (+ j
+                                                  (let ([k 11])
+                                                    (+ k
+                                                       (let ([l 12])
+                                                         (+ l
+                                                            (let ([m 13])
+                                                              (+ l m))))))))))))))))))))))))))

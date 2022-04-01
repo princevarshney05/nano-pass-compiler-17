@@ -154,23 +154,27 @@
 
 (define (explicate_pred cnd thn els)
   (match cnd
-    [(Var x) (values (IfStmt (Prim 'eq? (list (Var x) (Bool #t))) (create_block thn) (create_block els)) '())]
+    [(Var x)
+     (values (IfStmt (Prim 'eq? (list (Var x) (Bool #t))) (create_block thn) (create_block els)) '())]
     [(Let x rhs body)
-      (let*-values ([(intmd-seq1 intmd-vars1) (explicate_pred body (create_block thn) (create_block els))]
-                    [(intmd-seq2 intmd-vars2) (explicate_assign rhs x intmd-seq1)])
-        (values intmd-seq2 (remove-duplicates (append intmd-vars1 intmd-vars2 `(,x)))))]
-    [(Prim 'not (list e)) (values (IfStmt (Prim 'eq? (list e (Bool #t))) (create_block els) (create_block thn)) '())]
+     (let*-values ([(intmd-seq1 intmd-vars1)
+                    (explicate_pred body (create_block thn) (create_block els))]
+                   [(intmd-seq2 intmd-vars2) (explicate_assign rhs x intmd-seq1)])
+       (values intmd-seq2 (remove-duplicates (append intmd-vars1 intmd-vars2 `(,x)))))]
+    [(Prim 'not (list e))
+     (values (IfStmt (Prim 'eq? (list e (Bool #t))) (create_block els) (create_block thn)) '())]
     [(Prim op es)
-      #:when (or (eq? op 'eq?) (eq? op '<))
-      (values (IfStmt (Prim op es) (create_block thn) (create_block els)) '())]
-    [(Bool b) (values (IfStmt (Prim 'eq? (list cnd (Bool #t))) (create_block thn) (create_block els)) '())]
+     #:when (or (eq? op 'eq?) (eq? op '<))
+     (values (IfStmt (Prim op es) (create_block thn) (create_block els)) '())]
+    [(Bool b)
+     (values (IfStmt (Prim 'eq? (list cnd (Bool #t))) (create_block thn) (create_block els)) '())]
     [(If cnd^ thn^ els^)
-      (define thn-block (create_block thn))
-      (define els-block (create_block els))
-      (let*-values ([(intmd-seqthn intmd-vars1) (explicate_pred thn^ thn-block els-block)]
-                    [(intmd-seqels intmd-vars2) (explicate_pred els^ thn-block els-block)]
-                    [(intmd-seqcnd intmd-vars3) (explicate_pred cnd^ intmd-seqthn intmd-seqels)])
-        (values intmd-seqcnd (remove-duplicates (append intmd-vars1 intmd-vars2 intmd-vars3))))]
+     (define thn-block (create_block thn))
+     (define els-block (create_block els))
+     (let*-values ([(intmd-seqthn intmd-vars1) (explicate_pred thn^ thn-block els-block)]
+                   [(intmd-seqels intmd-vars2) (explicate_pred els^ thn-block els-block)]
+                   [(intmd-seqcnd intmd-vars3) (explicate_pred cnd^ intmd-seqthn intmd-seqels)])
+       (values intmd-seqcnd (remove-duplicates (append intmd-vars1 intmd-vars2 intmd-vars3))))]
     [else (error "explicate_pred unhandled case" cnd)]))
 
 (define (explicate-control p)
@@ -321,7 +325,9 @@
      (define write-set (set))
      (values read-set write-set)]
     ;;; (values (set) caller-save)
-    [(Callq label n) (values (list->set (take callee-save n )) (list->set (map (lambda (r) (Reg r)) (set->list caller-save))))]
+    [(Callq label n)
+     (values (list->set (take callee-save n))
+             (list->set (map (lambda (r) (Reg r)) (set->list caller-save))))]
     [(Instr 'set (list A B))
      (define read-set (valid-set B))
      (define write-set (valid-set B))
@@ -395,9 +401,9 @@
   (match p
     [(X86Program pinfo body)
      (define local-vars (dict-ref pinfo 'locals))
-    ;  (display "\n====\nbody: \n")
-    ;  (print body)
-    ;  (display "\n")
+     ;  (display "\n====\nbody: \n")
+     ;  (print body)
+     ;  (display "\n")
      (for/list ([block body])
        (match block
          [(cons label (Block binfo instrs))
@@ -416,27 +422,28 @@
     (match inst
       [(or (Instr 'movq (list s d)) (Instr 'movzbq (list s d)))
        (for/list ([v live-var])
-         (when (and (and (not (equal? v s)) (not (equal? v d))) (not (has-edge? interference-graph v d)))
-              ; (display "\n----\nAdding Edge: ")
-              ; (display v)
-              ; (display " -> ")
-              ; (display d)
+         (when (and (and (not (equal? v s)) (not (equal? v d)))
+                    (not (has-edge? interference-graph v d)))
+           ; (display "\n----\nAdding Edge: ")
+           ; (display v)
+           ; (display " -> ")
+           ; (display d)
            (add-edge! interference-graph v d)))]
       [_
        (define-values (_ write-vars) (get-read-write-sets inst))
-      ;  Print inst and write-vars
-      ; (display "\n======\ninst: ")
-      ; (print inst)
-      ; (display "\nwrite-vars: ")
-      ; (print write-vars)
-      ; (display "\n======\n")
+       ;  Print inst and write-vars
+       ; (display "\n======\ninst: ")
+       ; (print inst)
+       ; (display "\nwrite-vars: ")
+       ; (print write-vars)
+       ; (display "\n======\n")
        (for/list ([d write-vars])
          (for/list ([v live-var])
            (when (not (or (equal? v d) (has-edge? interference-graph v d)))
-              ; (display "\n----\nAdding Edge: ")
-              ; (display v)
-              ; (display " -> ")
-              ; (display d)
+             ; (display "\n----\nAdding Edge: ")
+             ; (display v)
+             ; (display " -> ")
+             ; (display d)
              (add-edge! interference-graph v d))))])))
 
 (define num-to-reg
@@ -507,20 +514,19 @@
   (dict-for-each color-map
                  (lambda (k v)
                    (when (< v 12)
-                        (set! used-callee (set-add used-callee (dict-ref num-to-reg v)))
-                    )))
+                     (set! used-callee (set-add used-callee (dict-ref num-to-reg v))))))
   (set! used-callee (set-intersect callee-save used-callee))
-  (dict-for-each color-map
-                 (lambda (k v)
-                   (match (< v 12)
-                      [#t 
-                        (dict-set! color-map k (Reg (dict-ref num-to-reg v)))
-                        ; (set! used-callee (set-add used-callee (dict-ref num-to-reg v)))
-                      ]
-                      [#f 
-                        (dict-set! color-map k (Deref 'rbp (- (* (- 8) (- v 11)) (* 8 (set-count used-callee)))))
-                        (set! spill-count (+ spill-count 1))
-                      ])))
+  (dict-for-each
+   color-map
+   (lambda (k v)
+     (match (< v 12)
+       [#t
+        (dict-set! color-map k (Reg (dict-ref num-to-reg v)))
+        ; (set! used-callee (set-add used-callee (dict-ref num-to-reg v)))
+        ]
+       [#f
+        (dict-set! color-map k (Deref 'rbp (- (* (- 8) (- v 11)) (* 8 (set-count used-callee)))))
+        (set! spill-count (+ spill-count 1))])))
   (values color-map spill-count (set-intersect callee-save used-callee)))
 
 (define (allocate-registers p)
@@ -549,14 +555,14 @@
   (for ([reg regs-in-graph])
     (for ([node (in-neighbors interference-graph reg)])
       (match node
-          [(Var child_var) 
-           (dict-set! already_assigned_colors
-                      child_var
-                      (set-add (dict-ref already_assigned_colors child_var) (dict-ref reg-to-num (match reg [(Reg r) r]))))
-          ]
-          [_ #f])
-    )
-    )
+        [(Var child_var)
+         (dict-set! already_assigned_colors
+                    child_var
+                    (set-add (dict-ref already_assigned_colors child_var)
+                             (dict-ref reg-to-num
+                                       (match reg
+                                         [(Reg r) r]))))]
+        [_ #f])))
   ; inserting in priority queue
   (define pq
     (make-pqueue (lambda (a b)
@@ -619,16 +625,12 @@
        [(list (Deref r1 o1) (Deref r2 o2))
         (list (Instr 'movq (list (Deref r1 o1) (Reg 'rax)))
               (Instr 'cmpq (list (Reg 'rax) (Deref r2 o2))))]
-        [(list arg1 (Imm v))
-        (list (Instr 'movq (list (Imm v) (Reg 'rax)))
-              (Instr 'cmpq (list arg1 (Reg 'rax)))) 
-        ]
+       [(list arg1 (Imm v))
+        (list (Instr 'movq (list (Imm v) (Reg 'rax))) (Instr 'cmpq (list arg1 (Reg 'rax))))]
        [else (list instr)])]
     [(Instr 'movzbq (list arg1 (Imm v)))
-    (list (Instr 'movq (list (Imm v) (Reg 'rax)))
-              (Instr 'movzbq (list arg1 (Reg 'rax)))) 
-    ]
-    
+     (list (Instr 'movq (list (Imm v) (Reg 'rax))) (Instr 'movzbq (list arg1 (Reg 'rax))))]
+
     [(Instr op (list (Deref r1 o1) (Deref r2 o2)))
      (list (Instr 'movq (list (Deref r1 o1) (Reg 'rax))) (Instr op (list (Reg 'rax) (Deref r2 o2))))]
     [else (list instr)]))
@@ -655,26 +657,24 @@
                      [(cons label (Block binfo instrs))
                       (cons label (Block binfo (patch-instrs instrs)))])))]))
 
-
-
 (define (generate-main body offset used-callee)
-  (dict-set body
-            'main
-            (Block '()
-                   (append (list (Instr 'pushq (list (Reg 'rbp)))
-                         (Instr 'movq (list (Reg 'rsp) (Reg 'rbp))))
-                         (for/list ([reg used-callee]) (Instr 'pushq (list (Reg reg))))
-                         (list (Instr 'subq (list (Imm offset) (Reg 'rsp)))
-                         (Jmp 'start))))))
+  (dict-set
+   body
+   'main
+   (Block '()
+          (append (list (Instr 'pushq (list (Reg 'rbp))) (Instr 'movq (list (Reg 'rsp) (Reg 'rbp))))
+                  (for/list ([reg used-callee])
+                    (Instr 'pushq (list (Reg reg))))
+                  (list (Instr 'subq (list (Imm offset) (Reg 'rsp))) (Jmp 'start))))))
 
 (define (generate-conclusion body offset rev-used-callee)
   (dict-set body
             'conclusion
             (Block '()
                    (append (list (Instr 'addq (list (Imm offset) (Reg 'rsp))))
-                   (for/list ([reg rev-used-callee]) (Instr 'popq (list (Reg reg))))
-                         (list (Instr 'popq (list (Reg 'rbp)))
-                         (Retq))))))
+                           (for/list ([reg rev-used-callee])
+                             (Instr 'popq (list (Reg reg))))
+                           (list (Instr 'popq (list (Reg 'rbp))) (Retq))))))
 
 (define (mult-16 n)
   (if (= (modulo n 16) 0) n (mult-16 (add1 n))))
@@ -683,10 +683,12 @@
 (define (prelude-and-conclusion p)
   (match p
     [(X86Program info body)
-     
+
      (define used-callee (set->list (dict-ref info 'used-callee)))
-     (define offset (- (mult-16 (+ (* 8 (dict-ref info 'spill-count)) (* 8 (length used-callee)))) (* 8 (length used-callee))))
-     
+     (define offset
+       (- (mult-16 (+ (* 8 (dict-ref info 'spill-count)) (* 8 (length used-callee))))
+          (* 8 (length used-callee))))
+
      (define body-with-main (generate-main body offset used-callee))
      (define body-complete (generate-conclusion body-with-main offset (reverse used-callee)))
      (X86Program info body-complete)]))
@@ -832,5 +834,4 @@
     ("build interference graph" ,build-interference-graph ,interp-pseudo-x86-1)
     ("allocate registers" ,allocate-registers ,interp-pseudo-x86-1)
     ("patch instructions" ,patch-instructions ,interp-x86-1)
-    ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-1)
-    ))
+    ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-1)))
