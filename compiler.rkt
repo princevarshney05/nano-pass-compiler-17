@@ -4,16 +4,13 @@
 (require racket/fixnum)
 (require graph)
 (require "graph-printing.rkt")
-(require "interp-Lint.rkt")
-(require "interp-Lvar.rkt")
-(require "interp-Cvar.rkt")
-(require "interp-Lif.rkt")
-(require "interp-Cif.rkt")
+(require "interp-Lwhile.rkt")
+(require "interp-Cwhile.rkt")
 (require "interp.rkt")
 (require "priority_queue.rkt")
 (require "utilities.rkt")
-(require "type-check-Lif.rkt")
-(require "type-check-Cif.rkt")
+(require "type-check-Lwhile.rkt")
+(require "type-check-Cwhile.rkt")
 (require graph)
 (require "graph-printing.rkt")
 (provide (all-defined-out))
@@ -760,6 +757,7 @@
 ; shrink replaces and and or with if
 (define (shrink-exp exp)
   (match exp
+    ['() '()]
     [(Prim 'and (list e1 e2)) (If (shrink-exp e1) (shrink-exp e2) (Bool #f))]
     [(Prim 'or (list e1 e2)) (If (shrink-exp e1) (Bool #t) (shrink-exp e2))]
     [(Int n) (Int n)]
@@ -767,6 +765,10 @@
     [(Bool t) (Bool t)]
     [(Let x e1 e2) (Let x (shrink-exp e1) (shrink-exp e2))]
     [(If e1 e2 e3) (If (shrink-exp e1) (shrink-exp e2) (shrink-exp e3))]
+    [(Begin es exp) 
+      (Begin (map shrink-exp es) (shrink-exp exp))]
+    [(SetBang x e) (SetBang x (shrink-exp e))]
+    [(WhileLoop e1 e2) (WhileLoop (shrink-exp e1) (shrink-exp e2))]
     [(Prim '- (list e1 e2)) (Prim '+ (list e1 (Prim '- (list e2))))]
     [(Prim '> (list e1 e2))
      (define v (gensym))
@@ -821,17 +823,18 @@
 ;; Note that your compiler file (the file that defines the passes)
 ;; must be named "compiler.rkt"
 (define compiler-passes
-  `(("shrink" ,shrink ,interp-Lif ,type-check-Lif)
-    ("uniquify" ,uniquify ,interp-Lif ,type-check-Lif)
-    ;;; ("patial evaluator Lvar" ,pe_Lif ,interp-Lif ,type-check-Lif)
-    ;; Uncomment the following passes as you finish them.
-    ("remove complex opera*" ,remove-complex-opera* ,interp-Lif ,type-check-Lif)
-    ("explicate control" ,explicate-control ,interp-Cif ,type-check-Cif)
-    ("instruction selection" ,select-instructions ,interp-pseudo-x86-1)
-    ("build cfg" ,build-cfg ,interp-pseudo-x86-1)
-    ; ("print cfg" ,print-cfg ,interp-pseudo-x86-1)
-    ("uncover live" ,uncover-live ,interp-pseudo-x86-1)
-    ("build interference graph" ,build-interference-graph ,interp-pseudo-x86-1)
-    ("allocate registers" ,allocate-registers ,interp-pseudo-x86-1)
-    ("patch instructions" ,patch-instructions ,interp-x86-1)
-    ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-1)))
+  `(("shrink" ,shrink ,interp-Lwhile ,type-check-Lwhile)
+    ; ("uniquify" ,uniquify ,interp-Lif ,type-check-Lif)
+    ; ;;; ("patial evaluator Lvar" ,pe_Lif ,interp-Lif ,type-check-Lif)
+    ; ;; Uncomment the following passes as you finish them.
+    ; ("remove complex opera*" ,remove-complex-opera* ,interp-Lif ,type-check-Lif)
+    ; ("explicate control" ,explicate-control ,interp-Cif ,type-check-Cif)
+    ; ("instruction selection" ,select-instructions ,interp-pseudo-x86-1)
+    ; ("build cfg" ,build-cfg ,interp-pseudo-x86-1)
+    ; ; ("print cfg" ,print-cfg ,interp-pseudo-x86-1)
+    ; ("uncover live" ,uncover-live ,interp-pseudo-x86-1)
+    ; ("build interference graph" ,build-interference-graph ,interp-pseudo-x86-1)
+    ; ("allocate registers" ,allocate-registers ,interp-pseudo-x86-1)
+    ; ("patch instructions" ,patch-instructions ,interp-x86-1)
+    ; ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-1)
+    ))
