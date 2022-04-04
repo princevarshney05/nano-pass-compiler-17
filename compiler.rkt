@@ -51,8 +51,7 @@
          (Let (dict-ref newenv x) ((uniquify-exp env) e) ((uniquify-exp newenv) body)))]
       [(If e1 e2 e3) (If ((uniquify-exp env) e1) ((uniquify-exp env) e2) ((uniquify-exp env) e3))]
       [(SetBang x e) 
-       (let ([newenv (dict-set env x (gensym x))])
-        (SetBang (dict-ref newenv x) ((uniquify-exp env) e)))]
+       (SetBang (dict-ref env x) ((uniquify-exp env) e))]
       [(Begin es exp)
         (Begin (map (uniquify-exp env) es) ((uniquify-exp env) exp))]
       [(WhileLoop e1 e2) 
