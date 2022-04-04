@@ -46,13 +46,12 @@
   (match e
     [(Program info e) (Program info (flip-exp e))]))
 
-
 ;; Define the compiler passes to be used by interp-tests and the grader
 ;; Note that your compiler file (the file that defines the passes)
 ;; must be named "compiler.rkt"
 (define compiler-passes
   `(("shrink" ,shrink ,interp-Lwhile ,type-check-Lwhile)
-    ; ("uniquify" ,uniquify ,interp-Lif ,type-check-Lif)
+    ("uniquify" ,uniquify ,interp-Lwhile ,type-check-Lwhile)
     ; ;;; ("patial evaluator Lvar" ,pe_Lif ,interp-Lif ,type-check-Lif)
     ; ;; Uncomment the following passes as you finish them.
     ; ("remove complex opera*" ,remove-complex-opera* ,interp-Lif ,type-check-Lif)
