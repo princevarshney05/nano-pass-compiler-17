@@ -49,49 +49,6 @@
   (match e
     [(Program info e) (Program info (flip-exp e))]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; HW1 Passes
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; assign-homes : pseudo-x86 -> pseudo-x86
-
-; local variables are now moved to Program info  and removed from Block Info
-; (define (assign-homes p)
-;   (match p
-;     [(X86Program info body)
-;      (X86Program info
-;                  (match body
-;                    [`((,label . ,block))
-;                     (match block
-;                       [(Block info instrs)
-;                        `((,label . ,(Block info
-;                                            (map-instrs (create-env (dict-ref info 'locals) -8)
-;                                                        instrs))))])]))]))
-
-; (X86Program '#hash()
-;   (list
-;     (cons 'start
-;       (Block '#hash((locals . (g10901))) (list (Instr 'movq (list (Imm 10) (Var 'g10901))) (Instr 'movq (list (Var 'g10901) (Reg 'rax))) (Jmp 'conclusion))))))
-
-
-;; build-interference-graph
-;; write a code to build interference graph
-;; Store the graph in info field of the program under the key 'conflicts'
-;;; (define (build-interference-graph p)
-;;;   (define interference-graph (undirected-graph `()))
-;;;   (match p
-;;;     [(X86Program pinfo (list (cons 'start block)))
-;;;       (define local-vars (dict-ref pinfo 'locals))
-;;;       ;;; (for/list ([item local-vars]) (print item)
-;;;       ;;;   (add-vertex! interference-graph (Var item)))
-;;;       (match block
-;;;         [(Block binfo instrs)
-;;;           (define live-vars (dict-ref binfo 'live-vars))
-;;;           (add-interfering-edges instrs live-vars interference-graph)
-;;;           ])
-;;;       (define new-pinfo (dict-set pinfo 'conflicts interference-graph))
-;;;       (X86Program new-pinfo (list (cons 'start block)))]))
-
 
 ;; Define the compiler passes to be used by interp-tests and the grader
 ;; Note that your compiler file (the file that defines the passes)
