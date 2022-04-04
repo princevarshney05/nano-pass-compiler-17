@@ -6,6 +6,7 @@
 
 (define (shrink-exp exp)
   (match exp
+    ['() '()]
     [(Prim 'and (list e1 e2)) (If (shrink-exp e1) (shrink-exp e2) (Bool #f))]
     [(Prim 'or (list e1 e2)) (If (shrink-exp e1) (Bool #t) (shrink-exp e2))]
     [(Int n) (Int n)]
@@ -13,6 +14,10 @@
     [(Bool t) (Bool t)]
     [(Let x e1 e2) (Let x (shrink-exp e1) (shrink-exp e2))]
     [(If e1 e2 e3) (If (shrink-exp e1) (shrink-exp e2) (shrink-exp e3))]
+    [(Begin es exp) 
+        (Begin (map shrink-exp es) (shrink-exp exp))]
+    [(SetBang x e) (SetBang x (shrink-exp e))]
+    [(WhileLoop e1 e2) (WhileLoop (shrink-exp e1) (shrink-exp e2))]
     [(Prim '- (list e1 e2)) (Prim '+ (list e1 (Prim '- (list e2))))]
     [(Prim '> (list e1 e2))
      (define v (gensym))
