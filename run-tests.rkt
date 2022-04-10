@@ -8,7 +8,7 @@
 (require "compiler.rkt")
 (require "type-check-Lwhile.rkt")
 (debug-level 1)
-(AST-output-syntax 'concrete-syntax)
+; (AST-output-syntax 'concrete-syntax)
 
 ;; all the files in the tests/ directory with extension ".rkt".
 (define all-tests
@@ -25,9 +25,9 @@
           (string=? r (car (string-split p "_"))))
         all-tests)))
 
-; (interp-tests "var" #f compiler-passes interp-Lwhile "var_test" (tests-for "var"))
-; (interp-tests "cond" type-check-Lwhile compiler-passes interp-Lwhile "cond_test" (tests-for "cond"))
-; (interp-tests "my" type-check-Lwhile compiler-passes interp-Lwhile "my_test" (tests-for "my"))
+(interp-tests "var" #f compiler-passes interp-Lwhile "var_test" (tests-for "var"))
+(interp-tests "cond" type-check-Lwhile compiler-passes interp-Lwhile "cond_test" (tests-for "cond"))
+(interp-tests "my" type-check-Lwhile compiler-passes interp-Lwhile "my_test" (tests-for "my"))
 (interp-tests "while" type-check-Lwhile compiler-passes interp-Lwhile "while_test" (tests-for "while"))
 
 ; Single Interp test

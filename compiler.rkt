@@ -17,6 +17,7 @@
 ; Passes
 (require "passes/shrink.rkt")
 (require "passes/uniquify.rkt")
+(require "passes/uncover-get.rkt")
 (require "passes/partial-evaluator.rkt")
 (require "passes/remove-complex-operations.rkt")
 (require "passes/explicate-control.rkt")
@@ -52,6 +53,7 @@
 (define compiler-passes
   `(("shrink" ,shrink ,interp-Lwhile ,type-check-Lwhile)
     ("uniquify" ,uniquify ,interp-Lwhile ,type-check-Lwhile)
+    ("uncover get" ,uncover-get! ,interp-Lwhile ,type-check-Lwhile)
     ; ;;; ("patial evaluator Lvar" ,pe_Lif ,interp-Lif ,type-check-Lif)
     ; ;; Uncomment the following passes as you finish them.
     ; ("remove complex opera*" ,remove-complex-opera* ,interp-Lif ,type-check-Lif)
