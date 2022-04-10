@@ -25,8 +25,10 @@
     [(WhileLoop e1 e2) (set-union (collect-set! e1) (collect-set! e2))]
     [(SetBang var rhs) (set-union (set var) (collect-set! rhs))]
     ; Do for begin
-    [(Begin es exp) (collect-set! exp)]
-    ))
+    [(Begin es exp)
+     (apply set-union
+            (for/list ([e (append es (list exp))])
+              (collect-set! e)))]))
 
 (define ((uncover-get!-exp set!-vars) e)
   (match e
