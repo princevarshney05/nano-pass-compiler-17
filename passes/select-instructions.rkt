@@ -8,7 +8,8 @@
     [(Int a) (Imm a)]
     [(Var a) (Var a)]
     [(Bool #t) (Imm 1)]
-    [(Bool #f) (Imm 0)]))
+    [(Bool #f) (Imm 0)]
+    [(Void) (Imm 0)]))
 
 (define (instruction-to-x86 e)
   (match e
@@ -30,6 +31,8 @@
      (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1)))
            (Instr 'set (list 'l (ByteReg 'al)))
            (Instr 'movzbq (list (ByteReg 'al) var)))]
+    ; Read can be standalone on left
+    [(Assign var (Prim 'read '()) (list (Callq 'read_int 0)))]
     [(Assign var var2) (if (equal? var var2) '() (list (Instr 'movq (list (int-to-imm var2) var))))]))
 
 (define (resolve-select-instructions e)
