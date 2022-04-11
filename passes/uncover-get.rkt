@@ -23,7 +23,7 @@
     [(If e1 e2 e3) (set-union (collect-set! e1) (collect-set! e2) (collect-set! e3))]
     [(Let x rhs body) (set-union (collect-set! rhs) (collect-set! body))]
     [(WhileLoop e1 e2) (set-union (collect-set! e1) (collect-set! e2))]
-    [(SetBang var rhs) (set-union (set var) (collect-set! rhs))]
+    [(SetBang x e) (set-union (set x) (collect-set! e))]
     ; Do for begin
     [(Begin es exp)
      (apply set-union
@@ -46,7 +46,7 @@
     [(Let x rhs body) (Let x ((uncover-get!-exp set!-vars) rhs) ((uncover-get!-exp set!-vars) body))]
     [(WhileLoop e1 e2)
      (WhileLoop ((uncover-get!-exp set!-vars) e1) ((uncover-get!-exp set!-vars) e2))]
-    [(SetBang var rhs) (SetBang var ((uncover-get!-exp set!-vars) rhs))]
+    [(SetBang x e) (SetBang x ((uncover-get!-exp set!-vars) e))]
     [(Begin es exp)
      (Begin (for/list ([e es])
               ((uncover-get!-exp set!-vars) e))

@@ -1,6 +1,7 @@
 #lang racket
 (require "../utilities.rkt")
-(provide basic-blocks explicate-control)
+(provide basic-blocks
+         explicate-control)
 
 ;; explicate-control : R1 -> C0
 ;; Function to create block
@@ -82,4 +83,3 @@
        ;(CProgram (dict-set #hash() 'locals intmd-vars) `((start . ,intmd-seq))))]))
        (CProgram (dict-set #hash() 'locals intmd-vars)
                  (cons (cons 'start intmd-seq) basic-blocks)))]))
-

@@ -3,14 +3,14 @@
 
 (provide prelude-and-conclusion)
 (define (generate-main body offset used-callee)
-  (dict-set
-   body
-   'main
-   (Block '()
-          (append (list (Instr 'pushq (list (Reg 'rbp))) (Instr 'movq (list (Reg 'rsp) (Reg 'rbp))))
-                  (for/list ([reg used-callee])
-                    (Instr 'pushq (list (Reg reg))))
-                  (list (Instr 'subq (list (Imm offset) (Reg 'rsp))) (Jmp 'start))))))
+  (dict-set body
+            'main
+            (Block '()
+                   (append (list (Instr 'pushq (list (Reg 'rbp)))
+                                 (Instr 'movq (list (Reg 'rsp) (Reg 'rbp))))
+                           (for/list ([reg used-callee])
+                             (Instr 'pushq (list (Reg reg))))
+                           (list (Instr 'subq (list (Imm offset) (Reg 'rsp))) (Jmp 'start))))))
 
 (define (generate-conclusion body offset rev-used-callee)
   (dict-set body

@@ -1,7 +1,7 @@
-
 #lang racket
 (require "../utilities.rkt")
-(provide select-instructions int-to-imm)
+(provide select-instructions
+         int-to-imm)
 
 (define (int-to-imm e)
   (match e

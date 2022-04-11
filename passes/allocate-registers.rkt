@@ -5,7 +5,6 @@
 
 (provide allocate-registers)
 
-
 (define (create-env lst offset)
   (match lst
     ['() #hash()]
@@ -127,7 +126,10 @@
 
 ; Helper function for graph coloring
 (define (color-graph interference-graph)
-  (define all-vars (for/list ([node (filter Var? (get-vertices interference-graph))]) (match node [(Var x) x])))
+  (define all-vars
+    (for/list ([node (filter Var? (get-vertices interference-graph))])
+      (match node
+        [(Var x) x])))
   (define regs-in-graph (filter Reg? (get-vertices interference-graph)))
   ; (print "-----")
   ; (print regs-in-graph)
