@@ -25,14 +25,14 @@
           (string=? r (car (string-split p "_"))))
         all-tests)))
 
-(interp-tests "var" #f compiler-passes interp-Lvec "var_test" (tests-for "var"))
-(interp-tests "cond" type-check-Lvec compiler-passes interp-Lvec "cond_test" (tests-for "cond"))
-(interp-tests "my" type-check-Lvec compiler-passes interp-Lvec "my_test" (tests-for "my"))
-(interp-tests "while" type-check-Lvec compiler-passes interp-Lvec "while_test" (tests-for "while"))
-(interp-tests "vec" type-check-Lvec compiler-passes interp-Lvec "vec_test" (tests-for "vec"))
+; (interp-tests "var" #f compiler-passes interp-Lvec "var_test" (tests-for "var"))
+; (interp-tests "cond" type-check-Lvec compiler-passes interp-Lvec "cond_test" (tests-for "cond"))
+; (interp-tests "my" type-check-Lvec compiler-passes interp-Lvec "my_test" (tests-for "my"))
+; (interp-tests "while" type-check-Lvec compiler-passes interp-Lvec "while_test" (tests-for "while"))
+; (interp-tests "vec" type-check-Lvec compiler-passes interp-Lvec "vec_test" (tests-for "vec"))
 
 ; Single Interp test
-; (interp-tests "single" type-check-Lvec compiler-passes interp-Lvec "single_test" (tests-for "single"))
+(interp-tests "single" type-check-Lvec compiler-passes interp-Lvec "single_test" (tests-for "single"))
 ; Single Compiler test
 ; (compiler-tests "single" type-check-Lvec compiler-passes "single_test" (tests-for "single"))
 

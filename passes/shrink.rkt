@@ -25,6 +25,7 @@
      (define v (gensym))
      (Let v (shrink-exp e1) (Prim 'not (list (Prim '< (list (shrink-exp e2) (Var v))))))]
     [(Prim '>= (list e1 e2)) (Prim 'not (list (Prim '< (list (shrink-exp e1) (shrink-exp e2)))))]
+    [(HasType e type) (HasType (shrink-exp e) type)]
     [(Prim op es)
      (Prim op
            (for/list ([e es])
