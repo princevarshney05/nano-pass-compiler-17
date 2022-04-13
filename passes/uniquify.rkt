@@ -18,6 +18,7 @@
       [(SetBang x e) (SetBang (dict-ref env x) ((uniquify-exp env) e))]
       [(Begin es exp) (Begin (map (uniquify-exp env) es) ((uniquify-exp env) exp))]
       [(WhileLoop e1 e2) (WhileLoop ((uniquify-exp env) e1) ((uniquify-exp env) e2))]
+      [(HasType e type) (HasType ((uniquify-exp env) e) type)]
       [(Prim op es)
        (Prim op
              (for/list ([e es])

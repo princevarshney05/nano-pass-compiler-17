@@ -5,6 +5,7 @@
 (require graph)
 (require "graph-printing.rkt")
 (require "interp-Lvec.rkt")
+(require "interp-Lvec-prime.rkt")
 (require "interp-Cvec.rkt")
 (require "interp.rkt")
 (require "utilities.rkt")
@@ -17,6 +18,7 @@
 ; Passes
 (require "passes/shrink.rkt")
 (require "passes/uniquify.rkt")
+(require "passes/expose-allocation.rkt")
 (require "passes/uncover-get.rkt")
 (require "passes/partial-evaluator.rkt")
 (require "passes/remove-complex-operations.rkt")
@@ -52,7 +54,8 @@
 ;; must be named "compiler.rkt"
 (define compiler-passes
   `(("shrink" ,shrink ,interp-Lvec ,type-check-Lvec)
-    ; ("uniquify" ,uniquify ,interp-Lwhile ,type-check-Lwhile)
+    ("uniquify" ,uniquify ,interp-Lvec ,type-check-Lvec)
+   ("expose-allocation" ,expose-allocation ,interp-Lvec-prime ,type-check-Lvec)
     ; ("uncover get" ,uncover-get! ,interp-Lwhile ,type-check-Lwhile)
     ; ;;; ("patial evaluator Lvar" ,pe_Lif ,interp-Lif ,type-check-Lif)
     ; ;; Uncomment the following passes as you finish them.
