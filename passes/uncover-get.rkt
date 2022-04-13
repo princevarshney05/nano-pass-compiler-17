@@ -14,6 +14,9 @@
     [(Int n) (set)]
     [(Bool b) (set)]
     [(Void) (set)]
+    [(Allocate e1 e2) (set)]
+    [(GlobalValue e1) (set)]
+    [(Collect e1) (set)]
     ; Handling all empty arguments separately because we can't use apply on empty list
     [(Prim op '()) (set)]
     [(Prim op es)
@@ -35,6 +38,9 @@
     [(Int n) (Int n)]
     [(Bool b) (Bool b)]
     [(Void) (Void)]
+    [(Allocate e1 e2) (Allocate e1 e2)]
+    [(GlobalValue e1) (GlobalValue e1)]
+    [(Collect e1) (Collect e1)]
     [(Prim op es)
      (Prim op
            (for/list ([e es])

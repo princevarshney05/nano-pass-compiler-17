@@ -19,7 +19,16 @@
     [(GetBang x)
      (define key (gensym))
      (values (Var key) `((,key ,(rco-exp e))))]
-    [(SetBang x e)
+    [(Allocate e1 e2) 
+     (define key (gensym))
+     (values (Var key) `((,key ,(rco-exp e))))]
+    [(GlobalValue e1) 
+     (define key (gensym)) 
+     (values (Var key) `((,key ,(rco-exp e))))]
+    [(Collect e1) 
+     (define key (gensym))
+     (values (Var key) `((,key ,(rco-exp e))))]
+    [(SetBang x e1)
      (define key (gensym))
      (values (Var key) `((,key ,(rco-exp e))))]
     [(Begin es exp)
@@ -47,6 +56,9 @@
     [(Var x) (Var x)]
     [(Bool t) (Bool t)]
     [(Void) (Void)]
+    [(Allocate e1 e2) (Allocate e1 e2)]
+    [(GlobalValue e) (GlobalValue e)]
+    [(Collect e) (Collect e)]
     [(GetBang x) (Var x)]
     [(SetBang x e) (SetBang x (rco-exp e))]
     [(Let key val body) (Let key (rco-exp val) (rco-exp body))]
