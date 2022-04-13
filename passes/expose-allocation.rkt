@@ -12,7 +12,7 @@
     [(SetBang x e) (SetBang x (expose-exp e))]
     [(Let x e1 e2) (Let x (expose-exp e1) (expose-exp e2))]
     [(If e1 e2 e3) (If (expose-exp e1) (expose-exp e2) (expose-exp e3))]
-    [(Prim op es) (map expose-exp es)]
+    [(Prim op es) (Prim op (map expose-exp es))]
     [(Begin es e) (Begin (map expose-exp es) (expose-exp e))]
     [(WhileLoop e1 e2) (WhileLoop (expose-exp e1) (expose-exp e2))]
     [(HasType (Prim 'vector es) t)
@@ -30,15 +30,17 @@
   (define len (length vars))
   (define bytes (Int (* 8 (+ len 1))))
   (Begin (list (If (Prim '<
-                         (list (Prim '+ (list (GlobalValue 'freeptr) bytes))
+                         (list (Prim '+ (list (GlobalValue 'free_ptr) bytes))
                                (GlobalValue 'fromspace_end)))
                    (Void)
-                   (Collect bytes)))
+                   (Collect bytes)))    
+        (if (= len 0)
+         (Var vecsym)
          (Let vecsym
               (Allocate len type)
               (Begin (for/list ([i (in-naturals)] [v vars])
                        (Prim 'vector-set! (list (Var vecsym) (Int i) (Var v))))
-                     (Var vecsym)))))
+                     (Var vecsym))))))
 
 (define (expose-allocation p)
   (match p

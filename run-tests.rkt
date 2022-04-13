@@ -29,7 +29,7 @@
 ; (interp-tests "cond" type-check-Lvec compiler-passes interp-Lvec "cond_test" (tests-for "cond"))
 ; (interp-tests "my" type-check-Lvec compiler-passes interp-Lvec "my_test" (tests-for "my"))
 ; (interp-tests "while" type-check-Lvec compiler-passes interp-Lvec "while_test" (tests-for "while"))
-; (interp-tests "vec" type-check-Lvec compiler-passes interp-Lvec "vec_test" (tests-for "vec"))
+; (interp-tests "vectors" type-check-Lvec compiler-passes interp-Lvec "vectors_test" (tests-for "vectors"))
 
 ; Single Interp test
 (interp-tests "single" type-check-Lvec compiler-passes interp-Lvec "single_test" (tests-for "single"))

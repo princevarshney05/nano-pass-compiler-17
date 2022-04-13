@@ -2,3 +2,5 @@
          (+ (vector-ref t 0)
             (vector-ref (vector-ref t 2) 0))
 44))
+
+; (vector-ref (vector 1 2 3) 0)
