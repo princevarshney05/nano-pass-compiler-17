@@ -804,12 +804,33 @@
   (match (dict-ref bs label)
     [(Block info instrs) (build-cfg-instrs label instrs g bs)]))
 
+; Edge by defauklt creates node if node doesn't exist
+; (define (add-cfg-blocks g bs)
+;   (for ([b (dict-keys bs)])
+;     (add-vertex! g b)))
+
+(define (add-cfg-edges g bs)
+  (for ([e bs])
+    (match e
+      [(cons block (Block info instrs)) 
+        (for ([instr instrs])
+          (match instr
+            [(JmpIf c label-target)
+              (add-directed-edge! g block label-target)]
+            [(Jmp label-target)
+              (when (not (equal? 'conclusion label-target))
+                  (add-directed-edge! g block label-target))]
+            [else g]))])))
+
 (define (build-cfg p)
   (match p
     [(X86Program info body)
      (define g (unweighted-graph/directed '()))
      (add-vertex! g 'start)
-     (X86Program (dict-set info 'cfg (build-cfg-block 'start g body)) body)]))
+    ;  (add-cfg-blocks g body)
+     (add-cfg-edges g body)
+    ;  (print-dot g "cfg-graph")
+     (X86Program (dict-set info 'cfg g) body)]))
 
 (define (print-cfg p)
   (match p
@@ -829,7 +850,7 @@
     ("explicate control" ,explicate-control ,interp-Cif ,type-check-Cif)
     ("instruction selection" ,select-instructions ,interp-pseudo-x86-1)
     ("build cfg" ,build-cfg ,interp-pseudo-x86-1)
-    ; ("print cfg" ,print-cfg ,interp-pseudo-x86-1)
+    ("print cfg" ,print-cfg ,interp-pseudo-x86-1)
     ("uncover live" ,uncover-live ,interp-pseudo-x86-1)
     ("build interference graph" ,build-interference-graph ,interp-pseudo-x86-1)
     ("allocate registers" ,allocate-registers ,interp-pseudo-x86-1)
