@@ -32,7 +32,7 @@
            (Instr 'set (list 'l (ByteReg 'al)))
            (Instr 'movzbq (list (ByteReg 'al) var)))]
     ; Read can be standalone on left
-    [(Assign var (Prim 'read '()) (list (Callq 'read_int 0)))]
+    [(Assign var (Prim 'read '())) (list (Callq 'read_int 0))]
     [(Assign var var2) (if (equal? var var2) '() (list (Instr 'movq (list (int-to-imm var2) var))))]))
 
 (define (resolve-select-instructions e)
