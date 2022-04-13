@@ -65,6 +65,9 @@
     [(Var y) (values (Seq (Assign (Var x) (Var y)) cont) '())]
     [(Int n) (values (Seq (Assign (Var x) (Int n)) cont) '())]
     [(Bool b) (values (Seq (Assign (Var x) (Bool b)) cont) '())]
+    [(Allocate e1 e2) (values (Seq (Assign (Var x) (Allocate e1 e2)) cont) '())]
+    [(Collect e1) (values (Seq (Assign (Var x) (Collect e1)) cont) '())]
+    [(GlobalValue e1) (values (Seq (Assign (Var x) (GlobalValue e1)) cont) '())]
     [(Let y rhs body)
      (let*-values ([(intmd-seq1 intmd-vars1) (explicate_assign body x cont)]
                    [(intmd-seq2 intmd-vars2) (explicate_assign rhs y intmd-seq1)])
@@ -135,7 +138,7 @@
     [(Prim 'not (list e))
      (values (IfStmt (Prim 'eq? (list e (Bool #t))) (create_block els) (create_block thn)) '())]
     [(Prim op es)
-     #:when (or (eq? op 'eq?) (eq? op '<))
+     #:when (or (eq? op 'eq?) (eq? op '<) (eq? op 'vector-ref) (eq? op 'vector-set!))
      (values (IfStmt (Prim op es) (create_block thn) (create_block els)) '())]
     [(Bool b)
      (values (IfStmt (Prim 'eq? (list cnd (Bool #t))) (create_block thn) (create_block els)) '())]
@@ -171,6 +174,10 @@
     [(Bool x) (values cont '())]
     [(Var x) (values cont '())]
     [(Int x) (values cont '())]
+    [(GlobalValue e1) (values cont '())]
+    [(Allocate e1 e2) (values (Seq (Allocate e1 e2) cont) '())]
+    [(Collect e1) (values (Seq (Collect e1) cont) '())]
+    [(Prim 'vector-set! e1) (values (Seq e cont) '())]
     [(Prim 'read '()) (values (Seq e cont) '())]
     [(Prim op es) (values cont '())]
     [(Let x rhs body)
@@ -205,7 +212,6 @@
       )
       (values intmd-seq2 (remove-duplicates (append intmd-vars1 intmd-vars2))))
     ]
-
     [(WhileLoop cnd body)
       (define label-loop (gensym 'loop))
 
