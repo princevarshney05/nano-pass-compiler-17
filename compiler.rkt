@@ -767,7 +767,7 @@
     [(Bool t) (Bool t)]
     [(Let x e1 e2) (Let x (shrink-exp e1) (shrink-exp e2))]
     [(If e1 e2 e3) (If (shrink-exp e1) (shrink-exp e2) (shrink-exp e3))]
-    [(Prim '- (list e1 e2)) (Prim '+ (list e1 (Prim '- (list e2))))]
+    [(Prim '- (list e1 e2)) (Prim '+ (list (shrink-exp e1) (Prim '- (list (shrink-exp e2)))))]
     [(Prim '> (list e1 e2))
      (define v (gensym))
      (Let v (shrink-exp e1) (Prim '< (list (shrink-exp e2) (Var v))))]
