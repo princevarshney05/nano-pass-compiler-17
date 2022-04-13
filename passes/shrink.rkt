@@ -17,7 +17,7 @@
     [(Begin es exp) (Begin (map shrink-exp es) (shrink-exp exp))]
     [(SetBang x e) (SetBang x (shrink-exp e))]
     [(WhileLoop e1 e2) (WhileLoop (shrink-exp e1) (shrink-exp e2))]
-    [(Prim '- (list e1 e2)) (Prim '+ (list e1 (Prim '- (list e2))))]
+    [(Prim '- (list e1 e2)) (Prim '+ (list (shrink-exp e1) (Prim '- (list (shrink-exp e2)))))]
     [(Prim '> (list e1 e2))
      (define v (gensym))
      (Let v (shrink-exp e1) (Prim '< (list (shrink-exp e2) (Var v))))]
