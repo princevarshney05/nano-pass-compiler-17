@@ -7,8 +7,8 @@
 (require "interp.rkt")
 (require "compiler.rkt")
 (require "type-check-Lwhile.rkt")
-; (debug-level 1)
-; (AST-output-syntax 'concrete-syntax)
+;(debug-level 1)
+;(AST-output-syntax 'concrete-syntax)
 
 ;; all the files in the tests/ directory with extension ".rkt".
 (define all-tests
@@ -25,19 +25,20 @@
           (string=? r (car (string-split p "_"))))
         all-tests)))
 
-(interp-tests "var" #f compiler-passes interp-Lwhile "var_test" (tests-for "var"))
-(interp-tests "cond" type-check-Lwhile compiler-passes interp-Lwhile "cond_test" (tests-for "cond"))
-(interp-tests "my" type-check-Lwhile compiler-passes interp-Lwhile "my_test" (tests-for "my"))
-(interp-tests "while" type-check-Lwhile compiler-passes interp-Lwhile "while_test" (tests-for "while"))
+;(interp-tests "var" #f compiler-passes interp-Lwhile "var_test" (tests-for "var"))
+;(interp-tests "cond" type-check-Lwhile compiler-passes interp-Lwhile "cond_test" (tests-for "cond"))
+;(interp-tests "my" type-check-Lwhile compiler-passes interp-Lwhile "my_test" (tests-for "my"))
+;(interp-tests "while" type-check-Lwhile compiler-passes interp-Lwhile "while_test" (tests-for "while"))
 
 ; Single Interp test
-; (interp-tests "single" type-check-Lwhile compiler-passes interp-Lwhile "single_test" (tests-for "single"))
+;(interp-tests "single" type-check-Lwhile compiler-passes interp-Lwhile "single_test" (tests-for "single"))
 ; Single Compiler test
 ; (compiler-tests "single" type-check-Lwhile compiler-passes "single_test" (tests-for "single"))
 
 ; Uncomment the following when all the passes are complete to
 ; test the final x86 code.
-; (compiler-tests "var" type-check-Lwhile compiler-passes "var_test" (tests-for "var"))
-; (compiler-tests "my" type-check-Lwhile compiler-passes "my_test" (tests-for "my"))
-; (compiler-tests "cond" type-check-Lwhile compiler-passes "cond_test" (tests-for "cond"))
+(compiler-tests "var" type-check-Lwhile compiler-passes "var_test" (tests-for "var"))
+(compiler-tests "my" type-check-Lwhile compiler-passes "my_test" (tests-for "my"))
+(compiler-tests "cond" type-check-Lwhile compiler-passes "cond_test" (tests-for "cond"))
+(compiler-tests "while" type-check-Lwhile compiler-passes "while_test" (tests-for "while"))
 
