@@ -61,7 +61,7 @@
     ; ;; Uncomment the following passes as you finish them.
     ("remove complex opera*" ,remove-complex-opera* ,interp-Lvec-prime ,type-check-Lvec)
     ("explicate control" ,explicate-control ,interp-Cvec ,type-check-Cvec)
-    ; ("instruction selection" ,select-instructions ,interp-pseudo-x86-1)
+    ("instruction selection" ,select-instructions ,interp-pseudo-x86-2)
     ; ("build cfg" ,build-cfg ,interp-pseudo-x86-1)
     ; ; ("print cfg" ,print-cfg ,interp-pseudo-x86-1)
     ; ("uncover live" ,uncover-live ,interp-pseudo-x86-1)

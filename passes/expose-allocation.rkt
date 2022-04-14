@@ -38,10 +38,18 @@
          (Var vecsym)
          (Let vecsym
               (Allocate len type)
-              (Begin (for/list ([i (in-naturals)] [v vars])
-                       (Prim 'vector-set! (list (Var vecsym) (Int i) (Var v))))
-                     (Var vecsym))))))
+              ; (Begin (for/list ([i (in-naturals)] [v vars])
+              ;          (Prim 'vector-set! (list (Var vecsym) (Int i) (Var v))))
+              ;        (Var vecsym))))))
+              (helper vars 0 vecsym)))))
 
 (define (expose-allocation p)
   (match p
     [(Program info e) (Program info (expose-exp e))]))
+
+
+(define (helper vars i vecsym)
+  (match vars
+  ['() (Var vecsym)]
+  [(cons x y) (Let (gensym '_) (Prim 'vector-set! (list (Var vecsym) (Int i) (Var x))) (helper y (+ i 1) vecsym))]))
+
