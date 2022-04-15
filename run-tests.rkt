@@ -41,4 +41,5 @@
 ; (compiler-tests "var" type-check-Lwhile compiler-passes "var_test" (tests-for "var"))
 ; (compiler-tests "my" type-check-Lwhile compiler-passes "my_test" (tests-for "my"))
 ; (compiler-tests "cond" type-check-Lwhile compiler-passes "cond_test" (tests-for "cond"))
+; (compiler-tests "while" type-check-Lwhile compiler-passes "while_test" (tests-for "while"))
 
