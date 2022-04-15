@@ -1,6 +1,6 @@
 (let ([x 1])
-    (begin 
+  (begin
     (while (< x 42)
-        (begin
-          (set! x (+ x 1))))
+           (begin
+             (set! x (+ x 1))))
     x))
