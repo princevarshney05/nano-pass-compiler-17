@@ -24,23 +24,25 @@
     ['() '()]
     [(cons x y) (cons (map-instr env x) (map-instrs env y))]))
 
+(define active_reg_count 12)
+
 (define (map-registers color-map)
   (define spill-count 0)
   (define used-callee (set))
   (dict-for-each color-map
                  (lambda (k v)
-                   (when (< v 12)
+                   (when (< v active_reg_count)
                      (set! used-callee (set-add used-callee (dict-ref num-to-reg v))))))
   (set! used-callee (set-intersect callee-save used-callee))
   (dict-for-each
     color-map
     (lambda (k v)
-     (match (< v 12)
+     (match (< v active_reg_count)
        [#t
         (dict-set! color-map k (Reg (dict-ref num-to-reg v)))
         ]
        [#f
-        (dict-set! color-map k (Deref 'rbp (- (* (- 8) (- v 11)) (* 8 (set-count used-callee))))) 
+        (dict-set! color-map k (Deref 'rbp (- (* (- 8) (- v (- active_reg_count 1))) (* 8 (set-count used-callee))))) 
         (set! spill-count (+ spill-count 1))])))
   (values color-map spill-count (set-intersect callee-save used-callee))
 )
@@ -76,22 +78,20 @@
              2
              'r10
              3
-             'r11
-             4
              'r12
-             5
+             4
              'r13
-             6
+             5
              'r14
-             7
+             6
              'rbx
-             8
+             7
              'rcx
-             9
+             8
              'rdx
-             10
+             9
              'rsi
-             11
+             10
              'rdi))
 
 (define reg-to-num
@@ -106,24 +106,22 @@
              1
              'r10
              2
-             'r11
-             3
              'r12
-             4
+             3
              'r13
-             5
+             4
              'r14
-             6
+             5
              'rbx
-             7
+             6
              'rcx
-             8
+             7
              'rdx
-             9
+             8
              'rsi
-             10
+             9
              'rdi
-             11))
+             10))
 
 
 (define (color-graph interference-graph)
