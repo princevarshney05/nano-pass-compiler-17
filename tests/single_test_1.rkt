@@ -3,10 +3,10 @@
 ;             (vector-ref (vector-ref t 2) 0))
 ; 44))
 
-(let ([v1 (vector 1 2 3)]) 
-    (let ([v2 (vector 3 4 5)])
-    (+ (vector-ref v1 0) (vector-ref v2 0))))
-;(if (> 1 2) (+ 1 2) (+ 3 4))
+; (let ([v1 (vector 1 2 3)]) 
+;     (let ([v2 (vector 3 4 5)])
+;     (+ (vector-ref v1 0) (vector-ref v2 0))))
+(if (> 1 2) (+ 1 2) (+ 3 4))
 
 ;;; (let ([v (vector 1 20 30 40 1)])
 ;;;     (begin 

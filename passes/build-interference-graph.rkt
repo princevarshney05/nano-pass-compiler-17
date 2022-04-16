@@ -13,7 +13,6 @@
   (match p
     [(X86Program pinfo body)
      (define locals-types (dict-ref pinfo 'locals-types))
-     (println locals-types)
      (for/list ([block body])
        (match block
          [(cons label (Block binfo instrs))
