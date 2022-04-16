@@ -38,6 +38,9 @@
      (list (Instr 'movq (list (int-to-imm tup) (Reg 'r11)))
            (Instr 'movq (list (int-to-imm rhs) (Deref 'r11 (* 8 (+ n 1)))))
            (Instr 'movq (list (Imm 0) var)))]
+    [(Prim 'vector-set! (list tup (Int n) rhs))
+     (list (Instr 'movq (list (int-to-imm tup) (Reg 'r11)))
+           (Instr 'movq (list (int-to-imm rhs) (Deref 'r11 (* 8 (+ n 1))))))]
     [(Assign var (Prim 'vector-ref (list tup (Int n))))
      (list (Instr 'movq (list (int-to-imm tup) (Reg 'r11)))
            (Instr 'movq (list (Deref 'r11 (* 8 (+ n 1))) var)))]
