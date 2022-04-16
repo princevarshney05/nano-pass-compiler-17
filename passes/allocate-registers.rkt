@@ -24,7 +24,7 @@
     ['() '()]
     [(cons x y) (cons (map-instr env x) (map-instrs env y))]))
 
-(define active_reg_count 12)
+(define active_reg_count 11)
 
 (define (map-registers color-map)
   (define spill-count 0)
@@ -67,6 +67,12 @@
 
 (define num-to-reg
   (dict-set* #hash()
+              -5
+              'r15
+              -4
+              'rbp
+              -3
+              'r11
              -2
              'rsp
              -1
@@ -96,6 +102,12 @@
 
 (define reg-to-num
   (dict-set* #hash()
+              'r15
+              -5
+              'rbp
+              -4
+              'r11
+              -3
              'rsp
              -2
              'rax
