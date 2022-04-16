@@ -11,8 +11,11 @@
 (define (valid-set x)
   (match x
     [(Imm t) (set)]
+    [(Var x) (set x)]
+    [(Reg reg) (set reg)]
     [(ByteReg t) (set (byte-reg->full-reg t))]
-    [else (set x)]))
+    [(Deref reg offset) (set reg)]
+    [(Global _) (set)]))
 
 (define (get-read-set-from-label label)
   (match label 
@@ -54,8 +57,8 @@
      (values read-set write-set)]
     ;;; (values (set) caller-save)
     [(Callq label n)
-     (values (list->set (map (lambda (r) (Reg r)) (set->list (get-read-set-from-label label))))
-             (list->set (map (lambda (r) (Reg r)) (set->list caller-save))))]
+     (values (get-read-set-from-label label)
+             caller-save)]
     [(Instr 'set (list A B))
      (define read-set (valid-set B))
      (define write-set (valid-set B))
@@ -79,3 +82,4 @@
     [(X86Program info body)
      (print-graph (dict-ref info 'cfg))
      p]))
+
