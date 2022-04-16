@@ -6,7 +6,7 @@
 
 (define labels->live '())
 (define (custom-live-labels-set! labels)
-    (set! labels->live labels))
+  (set! labels->live labels))
 
 (define (valid-set x)
   (match x
@@ -18,10 +18,9 @@
     [(Global _) (set)]))
 
 (define (get-read-set-from-label label)
-  (match label 
-  ['collect (set 'rdi 'rsi)]
-  [else (set)]
-  ))
+  (match label
+    ['collect (set 'rdi 'rsi)]
+    [else (set)]))
 
 (define (get-read-write-sets instr)
   (match instr
@@ -56,15 +55,22 @@
      (define write-set (set))
      (values read-set write-set)]
     ;;; (values (set) caller-save)
-    [(Callq label n)
-     (values (get-read-set-from-label label)
-             caller-save)]
+    [(Callq label n) (values (get-read-set-from-label label) caller-save)]
     [(Instr 'set (list A B))
      (define read-set (valid-set B))
      (define write-set (valid-set B))
      (values read-set write-set)]
-
-    [else (error "read-write-sets: Unhandled case")]))
+    [(Instr 'andq (list A B))
+     (define read-set (set))
+     (define write-set (valid-set B))
+     (values read-set write-set)]
+    [(Instr 'sarq (list A B))
+     (define read-set (set))
+     (define write-set (valid-set B))
+     (values read-set write-set)]
+    [else
+     (print instr)
+     (error "read-write-sets: Unhandled case")]))
 
 (define (get-live-vars lst)
   (match lst
@@ -75,11 +81,10 @@
      (define-values (read-set write-set) (get-read-write-sets x))
 
      (define new-set (set-union (set-subtract last-set write-set) read-set))
-    (cons new-set live-vars)]))
+     (cons new-set live-vars)]))
 
 (define (print-cfg p)
   (match p
     [(X86Program info body)
      (print-graph (dict-ref info 'cfg))
      p]))
-
