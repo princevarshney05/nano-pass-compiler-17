@@ -19,13 +19,13 @@
     [(GetBang x)
      (define key (gensym))
      (values (Var key) `((,key ,(rco-exp e))))]
-    [(Allocate e1 e2) 
+    [(Allocate e1 e2)
      (define key (gensym))
      (values (Var key) `((,key ,(rco-exp e))))]
-    [(GlobalValue e1) 
-     (define key (gensym)) 
+    [(GlobalValue e1)
+     (define key (gensym))
      (values (Var key) `((,key ,(rco-exp e))))]
-    [(Collect e1) 
+    [(Collect e1)
      (define key (gensym))
      (values (Var key) `((,key ,(rco-exp e))))]
     [(SetBang x e1)
