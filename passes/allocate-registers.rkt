@@ -27,7 +27,7 @@
 
 (define active_reg_count 11)
 
-(define (map-registers color-map)
+(define (map-registers color-map locals-types)
   (define spill-count 0)
   (define used-callee (set))
   (dict-for-each color-map
@@ -44,9 +44,21 @@
         (dict-set! color-map k (Reg (dict-ref num-to-reg v)))
         ]
        [#f
-        (dict-set! color-map k (Deref 'rbp (- (* (- 8) (- v (- active_reg_count 1))) (* 8 (set-count used-callee))))) 
-        (set! spill-count (+ spill-count 1))])))
-  (values color-map spill-count (set-intersect callee-save used-callee))
+        (match (is-vector k locals-types)
+        [#t 
+        
+         (dict-set! color-map k (Deref 'r15 (* 8 num-root-spills)))
+         (set! num-root-spills (+ num-root-spills 1))
+        ]
+        [#f
+        (set! spill-count (+ spill-count 1))
+        (dict-set! color-map k (Deref 'rbp (- (* -8 spill-count) (* 8 (set-count used-callee)))))
+        ]
+        )
+        
+
+        ])))
+  (values color-map spill-count (set-intersect callee-save used-callee) num-root-spills)
 )
 
 
@@ -54,9 +66,14 @@
   (match p
     [(X86Program info body)
      (define interference-graph (dict-ref info 'conflicts))
+     (define locals-types (dict-ref info 'locals-types))
      (define color-map (color-graph interference-graph))
-     (define-values (color-reg spill-count used-callee) (map-registers color-map))
-     (X86Program (dict-set (dict-set info 'spill-count spill-count) 'used-callee used-callee)
+     (define-values (color-reg spill-count used-callee num-root-spills) (map-registers color-map locals-types))
+     (X86Program 
+     (dict-set 
+     (dict-set (dict-set info 'spill-count spill-count) 'used-callee used-callee) 
+     'num-root-spills 
+     num-root-spills)
         (for/list ([block body])
             (match block
                 [(cons label (Block binfo instrs))
