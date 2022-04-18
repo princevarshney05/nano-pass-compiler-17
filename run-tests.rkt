@@ -2,11 +2,11 @@
 #lang racket
 
 (require "utilities.rkt")
-(require "interp-Lif.rkt")
-(require "interp-Cif.rkt")
+(require "interp-Lvec.rkt")
+(require "interp-Cvec.rkt")
 (require "interp.rkt")
 (require "compiler.rkt")
-(require "type-check-Lif.rkt")
+(require "type-check-Lvec.rkt")
 ; (debug-level 1)
 ; (AST-output-syntax 'concrete-syntax)
 
@@ -25,12 +25,21 @@
           (string=? r (car (string-split p "_"))))
         all-tests)))
 
-;(interp-tests "var" #f compiler-passes interp-Lif "var_test" (tests-for "var"))
-;(interp-tests "cond" type-check-Lif compiler-passes interp-Lif "cond_test" (tests-for "cond"))
-;(interp-tests "my" type-check-Lif compiler-passes interp-Lif "my_test" (tests-for "my"))
+;;; (interp-tests "var" #f compiler-passes interp-Lvec "var_test" (tests-for "var"))
+;;; (interp-tests "cond" type-check-Lvec compiler-passes interp-Lvec "cond_test" (tests-for "cond"))
+;;; (interp-tests "my" type-check-Lvec compiler-passes interp-Lvec "my_test" (tests-for "my"))
+;;; (interp-tests "while" type-check-Lvec compiler-passes interp-Lvec "while_test" (tests-for "while"))
+;;; (interp-tests "vectors" type-check-Lvec compiler-passes interp-Lvec "vectors_test" (tests-for "vectors"))
+
+; Single Interp test
+; (interp-tests "single" type-check-Lvec compiler-passes interp-Lvec "single_test" (tests-for "single"))
+; Single Compiler test
+(compiler-tests "single" type-check-Lvec compiler-passes "single_test" (tests-for "single"))
+
 ; Uncomment the following when all the passes are complete to
 ; test the final x86 code.
-(compiler-tests "var" type-check-Lif compiler-passes "var_test" (tests-for "var"))
-(compiler-tests "my" type-check-Lif compiler-passes "my_test" (tests-for "my"))
-(compiler-tests "cond" type-check-Lif compiler-passes "cond_test" (tests-for "cond"))
-
+(compiler-tests "var" type-check-Lvec compiler-passes "var_test" (tests-for "var"))
+(compiler-tests "my" type-check-Lvec compiler-passes "my_test" (tests-for "my"))
+(compiler-tests "cond" type-check-Lvec compiler-passes "cond_test" (tests-for "cond"))
+(compiler-tests "while" type-check-Lvec compiler-passes "while_test" (tests-for "while"))
+(compiler-tests "vectors" type-check-Lvec compiler-passes "vectors_test" (tests-for "vectors"))
