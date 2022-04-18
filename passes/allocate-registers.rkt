@@ -1,6 +1,7 @@
 #lang racket
 (require "../utilities.rkt")
 (require "../priority_queue.rkt")
+(require "../custom_utilities.rkt")
 (require graph)
 
 (provide allocate-registers)
@@ -34,6 +35,7 @@
                    (when (< v active_reg_count)
                      (set! used-callee (set-add used-callee (dict-ref num-to-reg v))))))
   (set! used-callee (set-intersect callee-save used-callee))
+  (define num-root-spills 0)
   (dict-for-each
     color-map
     (lambda (k v)

@@ -4,6 +4,9 @@
 
 (provide (all-defined-out))
 
+(define (is-vector v locals-types)
+  (list? (dict-ref locals-types v #f)))
+
 (define labels->live '())
 (define (custom-live-labels-set! labels)
   (set! labels->live labels))

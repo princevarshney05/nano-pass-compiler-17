@@ -4,8 +4,7 @@
 (require "../custom_utilities.rkt")
 (require graph)
 
-(define (is-vector v locals-types)
-  (list? (dict-ref locals-types v #f)))
+
 
 (provide build-interference-graph)
 (define (build-interference-graph p)
