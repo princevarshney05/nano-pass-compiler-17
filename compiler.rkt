@@ -55,7 +55,7 @@
 ;; must be named "compiler.rkt"
 (define compiler-passes
   `(("shrink" ,shrink ,interp-Lfun ,type-check-Lfun)
-    ; ("uniquify" ,uniquify ,interp-Lvec ,type-check-Lvec)
+    ("uniquify" ,uniquify ,interp-Lfun ,type-check-Lfun)
     ; ("expose-allocation" ,expose-allocation ,interp-Lvec-prime ,type-check-Lvec)
     ; ("uncover get" ,uncover-get! ,interp-Lvec-prime,type-check-Lvec)
     ; ;;; ("patial evaluator Lvar" ,pe_Lif ,interp-Lif ,type-check-Lif)
