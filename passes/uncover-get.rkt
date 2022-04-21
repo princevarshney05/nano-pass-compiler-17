@@ -2,11 +2,24 @@
 (require "../utilities.rkt")
 (provide uncover-get!)
 
+; (define (uncover-get! p)
+;   (match p
+;     [(Program info e)
+;      (define collect-set-vars (collect-set! e))
+;      (Program info ((uncover-get!-exp collect-set-vars) e))]))
+
+(define (uncover-get!-defs def)
+    (match def 
+      [(Def label args rtype info body) 
+       (define collect-set-vars (collect-set! body))
+       (Def label args rtype info ((uncover-get!-exp collect-set-vars) body))
+      ]
+    )
+)
+
 (define (uncover-get! p)
   (match p
-    [(Program info e)
-     (define collect-set-vars (collect-set! e))
-     (Program info ((uncover-get!-exp collect-set-vars) e))]))
+    [(ProgramDefs info defs) (ProgramDefs info (map uncover-get!-defs defs)) ]))
 
 (define (collect-set! e)
   (match e
@@ -27,6 +40,7 @@
     [(Let x rhs body) (set-union (collect-set! rhs) (collect-set! body))]
     [(WhileLoop e1 e2) (set-union (collect-set! e1) (collect-set! e2))]
     [(SetBang x e) (set-union (set x) (collect-set! e))]
+    [(Apply func args) (apply set-union (for/list ([e (append (list func) args)]) (collect-set! e) ))]
     ; Do for begin
     [(Begin es exp)
      (apply set-union
@@ -53,6 +67,8 @@
     [(WhileLoop e1 e2)
      (WhileLoop ((uncover-get!-exp set!-vars) e1) ((uncover-get!-exp set!-vars) e2))]
     [(SetBang x e) (SetBang x ((uncover-get!-exp set!-vars) e))]
+    [(Apply func args) (Apply ((uncover-get!-exp set!-vars) func) (map (uncover-get!-exp set!-vars) args))]
+
     [(Begin es exp)
      (Begin (for/list ([e es])
               ((uncover-get!-exp set!-vars) e))
