@@ -7,7 +7,7 @@
 (require "interp.rkt")
 (require "compiler.rkt")
 (require "type-check-Lfun.rkt")
-(debug-level 1)
+; (debug-level 1)
 ;(AST-output-syntax 'concrete-syntax)
 
 ;; all the files in the tests/ directory with extension ".rkt".
@@ -25,9 +25,9 @@
           (string=? r (car (string-split p "_"))))
         all-tests)))
 
-; (interp-tests "var" #f compiler-passes interp-Lvec "var_test" (tests-for "var"))
-; (interp-tests "cond" type-check-Lvec compiler-passes interp-Lvec "cond_test" (tests-for "cond"))
-; (interp-tests "my" type-check-L vec compiler-passes interp-Lvec "my_test" (tests-for "my"))
+(interp-tests "var" type-check-Lfun compiler-passes interp-Lfun "var_test" (tests-for "var"))
+(interp-tests "cond" type-check-Lfun compiler-passes interp-Lfun "cond_test" (tests-for "cond"))
+(interp-tests "my" type-check-Lfun compiler-passes interp-Lfun "my_test" (tests-for "my"))
 (interp-tests "while" type-check-Lfun compiler-passes interp-Lfun "while_test" (tests-for "while"))
 (interp-tests "vectors" type-check-Lfun compiler-passes interp-Lfun "vectors_test" (tests-for "vectors"))
 (interp-tests "functions" type-check-Lfun compiler-passes interp-Lfun "functions_test" (tests-for "functions"))
