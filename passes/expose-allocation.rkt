@@ -9,6 +9,8 @@
     [(Var x) (Var x)]
     [(Bool b) (Bool b)]
     [(Void) (Void)]
+    [(FunRef x y) (FunRef x y)]
+    [(GetBang x) (GetBang x)]
     [(SetBang x e) (SetBang x (expose-exp e))]
     [(Let x e1 e2) (Let x (expose-exp e1) (expose-exp e2))]
     [(If e1 e2 e3) (If (expose-exp e1) (expose-exp e2) (expose-exp e3))]
