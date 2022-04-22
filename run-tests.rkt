@@ -27,8 +27,8 @@
 
 ; (interp-tests "var" #f compiler-passes interp-Lvec "var_test" (tests-for "var"))
 ; (interp-tests "cond" type-check-Lvec compiler-passes interp-Lvec "cond_test" (tests-for "cond"))
-; (interp-tests "my" type-check-Lvec compiler-passes interp-Lvec "my_test" (tests-for "my"))
-; (interp-tests "while" type-check-Lvec compiler-passes interp-Lvec "while_test" (tests-for "while"))
+; (interp-tests "my" type-check-L vec compiler-passes interp-Lvec "my_test" (tests-for "my"))
+; (interp-tests "while" type-check-Lfun compiler-passes interp-Lfun "while_test" (tests-for "while"))
 (interp-tests "vectors" type-check-Lfun compiler-passes interp-Lfun "vectors_test" (tests-for "vectors"))
 (interp-tests "functions" type-check-Lfun compiler-passes interp-Lfun "functions_test" (tests-for "functions"))
 

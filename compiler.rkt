@@ -60,7 +60,7 @@
     ("uniquify" ,uniquify ,interp-Lfun ,type-check-Lfun)
     ("uncover get" ,uncover-get! ,interp-Lfun ,type-check-Lfun)
     ("reveal functions" ,reveal-functions ,interp-Lfun-prime ,type-check-Lfun)
-    ("limit functions" ,limit-functions ,interp-Lfun-prime,type-check-Lfun)
+    ("limit functions" ,limit-functions ,interp-Lfun-prime ,type-check-Lfun)
     ("expose-allocation" ,expose-allocation ,interp-Lfun-prime ,type-check-Lfun)
     ; ;;; ("patial evaluator Lvar" ,pe_Lif ,interp-Lif ,type-check-Lif)
     ; ;; Uncomment the following passes as you finish them.

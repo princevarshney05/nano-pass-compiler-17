@@ -36,6 +36,7 @@
      (apply set-union
             (for/list ([e es])
               (collect-set! e)))]
+    [(HasType e type) (collect-set! e)]
     [(If e1 e2 e3) (set-union (collect-set! e1) (collect-set! e2) (collect-set! e3))]
     [(Let x rhs body) (set-union (collect-set! rhs) (collect-set! body))]
     [(WhileLoop e1 e2) (set-union (collect-set! e1) (collect-set! e2))]
@@ -59,6 +60,7 @@
      (Prim op
            (for/list ([e es])
              ((uncover-get!-exp set!-vars) e)))]
+    [(HasType e type) (HasType ((uncover-get!-exp set!-vars) e) type)]
     [(If e1 e2 e3)
      (If ((uncover-get!-exp set!-vars) e1)
          ((uncover-get!-exp set!-vars) e2)
