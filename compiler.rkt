@@ -21,6 +21,7 @@
 (require "passes/expose-allocation.rkt")
 (require "passes/uncover-get.rkt")
 (require "passes/reveal-functions.rkt")
+(require "passes/limit-functions.rkt")
 (require "passes/partial-evaluator.rkt")
 (require "passes/remove-complex-operations.rkt")
 (require "passes/explicate-control.rkt")
@@ -60,6 +61,7 @@
     ("expose-allocation" ,expose-allocation ,interp-Lfun ,type-check-Lfun)
     ("uncover get" ,uncover-get! ,interp-Lfun ,type-check-Lfun)
     ("reveal functions" ,reveal-functions ,interp-Lfun ,type-check-Lfun)
+    ("limit functions" ,limit-functions ,interp-Lfun ,type-check-Lfun)
     ; ;;; ("patial evaluator Lvar" ,pe_Lif ,interp-Lif ,type-check-Lif)
     ; ;; Uncomment the following passes as you finish them.
     ; ("remove complex opera*" ,remove-complex-opera* ,interp-Lvec-prime ,type-check-Lvec)
