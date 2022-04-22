@@ -21,6 +21,7 @@
     [(Var x) (values (Return (Var x)) '())]
     [(Int n) (values (Return (Int n)) '())]
     [(Bool b) (values (Return (Bool b)) '())]
+    [(FunRef a b) (values (Return (FunRef a b)) '())]
     [(Let x rhs body)
      (let*-values ([(intmd-seq1 intmd-vars1) (explicate_tail body)]
                    [(intmd-seq2 intmd-vars2) (explicate_assign rhs x intmd-seq1)])
@@ -57,6 +58,8 @@
       (define net-vars (append intmd-vars1 intmd-vars2))
       (values (Goto label-loop) net-vars) )
     ]
+    [(Apply func args)
+      (values (TailCall func args) '())]
     [else (error "explicate_tail unhandled case" e)]))
 
 (define (explicate_assign e x cont)
@@ -65,6 +68,7 @@
     [(Var y) (values (Seq (Assign (Var x) (Var y)) cont) '())]
     [(Int n) (values (Seq (Assign (Var x) (Int n)) cont) '())]
     [(Bool b) (values (Seq (Assign (Var x) (Bool b)) cont) '())]
+    [(FunRef a b) (values (Seq (Assign (Var x) (FunRef a b)) cont) '())]
     [(Allocate e1 e2) (values (Seq (Assign (Var x) (Allocate e1 e2)) cont) '())]
     [(Collect e1) (values (Seq (Assign (Var x) (Collect e1)) cont) '())]
     [(GlobalValue e1) (values (Seq (Assign (Var x) (GlobalValue e1)) cont) '())]
@@ -124,6 +128,9 @@
       (values (Goto label-loop) (remove-duplicates (append intmd-vars1 intmd-vars2 intmd-vars3))))
     ] ; todo : supply for vars in explicate_effect
 
+    [(Apply func args)
+     (values (Seq (Assign (Var x) (Call func args)) cont) '())]
+
     [else (error "explicate_assign unhandled case" e)]))
 
 (define (explicate_pred cnd thn els)
@@ -141,6 +148,8 @@
      #:when (or (eq? op 'eq?) (eq? op '<) (eq? op 'vector-ref) (eq? op 'vector-set!))
      (values (IfStmt (Prim op es) (create_block thn) (create_block els)) '())]
     [(Bool b)
+     (values (IfStmt (Prim 'eq? (list cnd (Bool #t))) (create_block thn) (create_block els)) '())]
+    [(FunRef a b)
      (values (IfStmt (Prim 'eq? (list cnd (Bool #t))) (create_block thn) (create_block els)) '())]
     [(If cnd^ thn^ els^)
      (define thn-block (create_block thn))
@@ -166,6 +175,10 @@
       (values intmd-seq2 (remove-duplicates (append intmd-vars1 intmd-vars2))))
     ]
 
+    [(Apply func args)
+     (define tmp (gensym 'tmp-var))
+     (explicate_pred (Let tmp cnd (Var tmp)) thn els)]
+
     [else (error "explicate_pred unhandled case" cnd)]))
 
 (define (explicate_effect e cont)
@@ -174,6 +187,7 @@
     [(Bool x) (values cont '())]
     [(Var x) (values cont '())]
     [(Int x) (values cont '())]
+    [(FunRef a b) (values cont '())]
     [(GlobalValue e1) (values cont '())]
     [(Allocate e1 e2) (values (Seq (Allocate e1 e2) cont) '())]
     [(Collect e1) (values (Seq (Collect e1) cont) '())]
@@ -222,25 +236,40 @@
       (set! basic-blocks (cons (cons label-loop intmd-seqcnd) basic-blocks))
       (values (Goto label-loop) (remove-duplicates (append intmd-vars1 intmd-vars2))))
     ]
+    [(Apply func args)
+     (values (Seq (Call func args) cont) '())]
     [else (error "explicate_effect unhandled case" e)] 
   )
 )
 
+; (define (explicate-control p)
+;   (set! basic-blocks '())
+;   (match p
+;     [(Program info body)
+;      (let-values ([(intmd-seq intmd-vars) (explicate_tail body)])
+;     ;  (display "\n\n")
+;     ;  (print p)
+;     ;  (display "\n----\n")
+;     ;  (print intmd-seq)
+;     ;  (display "\n----\n")
+;     ;  (print intmd-vars)
+;     ;  (display "\n----\n")
+;     ;  (print basic-blocks)
+;     ;  (display "\n\n")
+;        ; (CProgram intmd-vars `((start . ,intmd-seq))))]))
+;        ;(CProgram (dict-set #hash() 'locals intmd-vars) `((start . ,intmd-seq))))]))
+;        (CProgram (dict-set #hash() 'locals intmd-vars)
+;                  (cons (cons 'start intmd-seq) basic-blocks)))]))
+
+(define (exp-ctrl-def def)
+  (match def
+    [(Def name param rty info body)
+      (set! basic-blocks '())
+      (let-values ([(intmd-seq intmd-vars) (explicate_tail body)])
+        (Def name param rty (dict-set info 'locals intmd-vars)
+          (cons (cons (symbol-append name 'start) intmd-seq) basic-blocks)))]))
+
 (define (explicate-control p)
-  (set! basic-blocks '())
   (match p
-    [(Program info body)
-     (let-values ([(intmd-seq intmd-vars) (explicate_tail body)])
-    ;  (display "\n\n")
-    ;  (print p)
-    ;  (display "\n----\n")
-    ;  (print intmd-seq)
-    ;  (display "\n----\n")
-    ;  (print intmd-vars)
-    ;  (display "\n----\n")
-    ;  (print basic-blocks)
-    ;  (display "\n\n")
-       ; (CProgram intmd-vars `((start . ,intmd-seq))))]))
-       ;(CProgram (dict-set #hash() 'locals intmd-vars) `((start . ,intmd-seq))))]))
-       (CProgram (dict-set #hash() 'locals intmd-vars)
-                 (cons (cons 'start intmd-seq) basic-blocks)))]))
+    [(ProgramDefs info defs)
+     (ProgramDefs info (map exp-ctrl-def defs))]))

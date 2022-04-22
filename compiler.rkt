@@ -65,7 +65,7 @@
     ; ;;; ("patial evaluator Lvar" ,pe_Lif ,interp-Lif ,type-check-Lif)
     ; ;; Uncomment the following passes as you finish them.
     ("remove complex opera*" ,remove-complex-opera* ,interp-Lfun-prime ,type-check-Lfun)
-    ; ("explicate control" ,explicate-control ,interp-Cvec ,type-check-Cvec)
+    ("explicate control" ,explicate-control ,interp-Cfun ,type-check-Cfun)
     ;;; ("test locals" ,test-locals ,interp-Cvec ,type-check-Cvec)
     ; ("instruction selection" ,select-instructions ,interp-pseudo-x86-2)
     ; ("build cfg" ,build-cfg ,interp-pseudo-x86-2)
