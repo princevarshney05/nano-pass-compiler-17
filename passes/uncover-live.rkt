@@ -32,13 +32,7 @@
 (define (transfer label live-after)
   (match (dict-ref blocks label)
     [(Block info instrlist)
-     ;;; (display "*****\n")
-     ;;; (print label)
-     ;;; (display "\n*****\n")
      (define live-vars (get-live-vars instrlist))
-     ;;;  (display "*****\n")
-     ;;;   (print live-vars)
-     ;;;   (display "\n*****\n")
      (define new-info (dict-set info 'live-vars (cdr live-vars)))
      (set! blocks (dict-set blocks label (Block new-info instrlist)))
      (dict-set! labels->live label (car live-vars))
@@ -56,7 +50,7 @@
      (dict-set! temp (symbol-append name 'conclusion) (set 'rax 'rsp))
      (custom-live-labels-set! temp)
      (analyze_dataflow trans-G transfer (set) set-union)
-     (Def name params rtype info blocks)]))
+     (Def name params rtype (dict-set info 'labels->live labels->live) blocks)]))
 
 (define (uncover-live p)
   (match p

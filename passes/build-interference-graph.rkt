@@ -5,25 +5,13 @@
 (require graph)
 
 (provide build-interference-graph)
-(define (build-interference-graph p)
-  (define interference-graph (undirected-graph `()))
-  (match p
-    [(X86Program pinfo body)
-     (define locals-types (dict-ref pinfo 'locals-types))
-     (for/list ([block body])
-       (match block
-         [(cons label (Block binfo instrs))
-          (define live-vars (dict-ref binfo 'live-vars))
-          (add-interfering-edges instrs live-vars interference-graph locals-types)]))
-     (print-dot interference-graph "../interference-graph")
 
-     (define new-pinfo (dict-set pinfo 'conflicts interference-graph))
-     (X86Program new-pinfo body)]))
+
 
 (define (add-interfering-edges instrs live-vars interference-graph locals-types)
   (for ([inst instrs] [live-var live-vars])
     (match inst
-      [(Callq 'collect n)
+      [(or (Callq label n) (IndirectCallq label n))
        (define-values (_ write-vars) (get-read-write-sets inst))
        (define write-vars-vec (set-union write-vars callee-save))
        (for/list ([v live-var])
@@ -43,3 +31,28 @@
          (for/list ([v live-var])
            (when (not (or (equal? v d) (has-edge? interference-graph v d)))
              (add-edge! interference-graph v d))))])))
+
+
+
+
+
+(define (build-interference-graph-defs def)
+  (define interference-graph (undirected-graph `()))
+  (match def
+    [(Def name params rtype info blocks-cfg)
+     (define locals-types (dict-ref info 'locals-types))
+     (custom-live-labels-set! (dict-ref info 'labels->live))
+     (for/list ([block blocks-cfg])
+       (match block
+         [(cons label (Block binfo instrs))
+          (define live-vars (dict-ref binfo 'live-vars))
+          (add-interfering-edges instrs live-vars interference-graph locals-types)]))
+      (print-dot interference-graph "../interference-graph")
+      (Def name params rtype (dict-set info 'conflicts interference-graph) blocks-cfg)
+      ]))
+
+(define (build-interference-graph p)
+  (match p
+    [(ProgramDefs info defs) (ProgramDefs info (map build-interference-graph-defs defs))]))
+
+

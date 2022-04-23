@@ -17,19 +17,13 @@
               (add-directed-edge! g block label-target))]
            [else g]))])))
 
-;;; (define (build-cfg p)
-;;;   (match p
-;;;     [(X86Program info body)
-;;;      (define g (unweighted-graph/directed '()))
-;;;      (add-vertex! g 'start)
-;;;      (add-cfg-edges g body)
-;;;      (X86Program (dict-set info 'cfg g) body)]))
+
 
 (define (build-cfg-defs def)
   (match def
     [(Def name params rtype info blocks)
      (define g (unweighted-graph/directed '()))
-     ;;; (add-vertex! g 'start)
+     (add-vertex! g (symbol-append name 'start))
      (add-cfg-edges g blocks name)
      (Def name params rtype (dict-set info 'cfg g) blocks)]))
 

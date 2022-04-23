@@ -38,17 +38,17 @@
 
 ; (define (fun [a : Integer] [b : Integer]) : Integer (+ a b))
 ; (fun 1 2)
-(define (map [f : (Integer -> Integer)] [v : (Vector Integer Integer)])
-  :
-  (Vector Integer Integer)
-  (vector (f (vector-ref v 0)) (f (vector-ref v 1))))
+;;; (define (map [f : (Integer -> Integer)] [v : (Vector Integer Integer)])
+;;;   :
+;;;   (Vector Integer Integer)
+;;;   (vector (f (vector-ref v 0)) (f (vector-ref v 1))))
 
-(define (inc [x : Integer])
-  :
-  Integer
-  (+ x 1))
+;;; (define (inc [x : Integer])
+;;;   :
+;;;   Integer
+;;;   (+ x 1))
 
-(vector-ref (map inc (vector 0 41)) 1)
+;;; (vector-ref (map inc (vector 0 41)) 1)
 ;  (define (id [a : Integer] [b : Integer] [c : Integer] [d : Integer] [e : Integer] [f : Integer] [g : Integer] [h : Integer]) : Integer (
 ;     + a
 ;         (+ b
@@ -59,3 +59,11 @@
 ;                             (+ g h))))))
 ;  ))
 ;  (id 1 2 3 4 5 6 20 1)
+
+;;; (let ([x 10]) (let ([y (+ x 10)]) (let ([x (+ y x)]) (+ x y))))
+
+(define (id [x : Integer])
+  :
+  Integer
+  x)
+(id 42)
