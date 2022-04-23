@@ -60,7 +60,7 @@
      (define imm-args (map int-to-imm args))
      (append (for/list ([reg arg-registers] [arg imm-args])
                (Instr 'movq (list arg (Reg reg))))
-             (list (IndirectCallq fun (length args))))]
+             (list (IndirectCallq fun (length args)) (Instr 'movq (list (Reg 'rax) var))))]
     [(Assign var (FunRef e1 e2)) (list (Instr 'leaq (list (Global e1) var)))]
     [(Assign var var2) (if (equal? var var2) '() (list (Instr 'movq (list (int-to-imm var2) var))))]
     [(Collect bytes)
