@@ -62,8 +62,27 @@
 
 ;;; (let ([x 10]) (let ([y (+ x 10)]) (let ([x (+ y x)]) (+ x y))))
 
-(define (id [x : Integer])
-  :
-  Integer
-  x)
-(id 42)
+;;; (define (id [x : Integer])
+;;;   :
+;;;   Integer
+;;;   x)
+;;; (id 42)
+
+
+(define (mult [a : Integer] [b : Integer])
+    : Integer
+    (let ([x a]) 
+        (begin 
+            (while (> b 1)
+                (begin
+                (set! x (+ x a))
+                (set! b (- b 1))))
+        x)))
+
+(define (factorial [n : Integer])
+    : Integer
+    (if (eq? n 1)
+        1
+        (mult (factorial (- n 1)) n)))
+
+(factorial 2)

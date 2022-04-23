@@ -2,10 +2,10 @@
     : Integer
     (let ([x a]) 
         (begin 
-            (while (> b 0)
+            (while (> b 1)
                 (begin
                 (set! x (+ x a))
                 (set! b (- b 1))))
         x)))
 
-(mult 21 2)
+(mult 2 3)

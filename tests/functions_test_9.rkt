@@ -2,7 +2,7 @@
     : Integer
     (let ([x a]) 
         (begin 
-            (while (> b 0)
+            (while (> b 1)
                 (begin
                 (set! x (+ x a))
                 (set! b (- b 1))))
@@ -10,8 +10,8 @@
 
 (define (factorial [n : Integer])
     : Integer
-    (if (eq? n 0)
+    (if (eq? n 1)
         1
-        (mult n (factorial (- n 1)))))
+        (mult (factorial (- n 1)) n)))
 
-(factorial 5)
+(factorial 2)
