@@ -17,4 +17,11 @@
 ;;; (let ([v (vector 42)])
 ;;;     (if (< (vector-length v) 2) 5 10))
 
-(let ([v (vector 1 2)]) 42)
+;;; (let ([v (vector 1 2)]) 42)
+
+;;;  (define (id [x : Integer]) : Integer 
+;;;  (if (> x 1) x x))
+;;;  (id 42)
+
+ (define (id [x : Integer]) : Integer x)
+ (id 42)

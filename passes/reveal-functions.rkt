@@ -43,7 +43,7 @@
           (for ([def defs])
             (match def
                 [(Def name param rty info body)
-                  dict-set def-arg-cnt-map name (length param)
+                  (dict-set! def-arg-cnt-map name (length param))
                 ]
             )
           )
