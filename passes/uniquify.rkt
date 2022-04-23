@@ -51,7 +51,7 @@
         (define new-args '())
         (for ([arg args]) 
           (dict-set! new-env (car arg) (gensym (car arg)))
-          (set! new-args (cons (cons (dict-ref new-env (car arg)) (cdr arg)) new-args))
+          (set! new-args (append new-args (list (cons (dict-ref new-env (car arg)) (cdr arg))) ))
         )   
         (Def new-label new-args rtype info ((uniquify-exp new-env) body))])))
 
