@@ -7,8 +7,8 @@
 (require "interp.rkt")
 (require "compiler.rkt")
 (require "type-check-Lfun.rkt")
-(debug-level 1)
-(AST-output-syntax 'concrete-syntax)
+;;; (debug-level 1)
+;;; (AST-output-syntax 'concrete-syntax)
 
 ;; all the files in the tests/ directory with extension ".rkt".
 (define all-tests
@@ -25,12 +25,12 @@
           (string=? r (car (string-split p "_"))))
         all-tests)))
 
-;;; (interp-tests "var" type-check-Lfun compiler-passes interp-Lfun "var_test" (tests-for "var"))
-;;; (interp-tests "cond" type-check-Lfun compiler-passes interp-Lfun "cond_test" (tests-for "cond"))
-;;; (interp-tests "my" type-check-Lfun compiler-passes interp-Lfun "my_test" (tests-for "my"))
-;;; (interp-tests "while" type-check-Lfun compiler-passes interp-Lfun "while_test" (tests-for "while"))
-;;; (interp-tests "vectors" type-check-Lfun compiler-passes interp-Lfun "vectors_test" (tests-for "vectors"))
-;;;(interp-tests "functions" type-check-Lfun compiler-passes interp-Lfun "functions_test" (tests-for "functions"))
+(interp-tests "var" type-check-Lfun compiler-passes interp-Lfun "var_test" (tests-for "var"))
+(interp-tests "cond" type-check-Lfun compiler-passes interp-Lfun "cond_test" (tests-for "cond"))
+(interp-tests "my" type-check-Lfun compiler-passes interp-Lfun "my_test" (tests-for "my"))
+(interp-tests "while" type-check-Lfun compiler-passes interp-Lfun "while_test" (tests-for "while"))
+(interp-tests "vectors" type-check-Lfun compiler-passes interp-Lfun "vectors_test" (tests-for "vectors"))
+(interp-tests "functions" type-check-Lfun compiler-passes interp-Lfun "functions_test" (tests-for "functions"))
 
 ; Single Interp test
 (interp-tests "single" type-check-Lfun compiler-passes interp-Lfun "single_test" (tests-for "single"))
@@ -39,10 +39,10 @@
 
 ; Uncomment the following when all the passes are complete to
 ; test the final x86 code.
-;;; (compiler-tests "var" type-check-Lfun compiler-passes "var_test" (tests-for "var"))
-;;; (compiler-tests "my" type-check-Lfun compiler-passes "my_test" (tests-for "my"))
-;;; (compiler-tests "cond" type-check-Lfun compiler-passes "cond_test" (tests-for "cond"))
-;;; (compiler-tests "while" type-check-Lfun compiler-passes "while_test" (tests-for "while"))
-;;; (compiler-tests "vectors" type-check-Lfun compiler-passes "vectors_test" (tests-for "vectors"))
-;;;(compiler-tests "functions" type-check-Lfun compiler-passes "functions_test" (tests-for "functions"))
+(compiler-tests "var" type-check-Lfun compiler-passes "var_test" (tests-for "var"))
+(compiler-tests "my" type-check-Lfun compiler-passes "my_test" (tests-for "my"))
+(compiler-tests "cond" type-check-Lfun compiler-passes "cond_test" (tests-for "cond"))
+(compiler-tests "while" type-check-Lfun compiler-passes "while_test" (tests-for "while"))
+(compiler-tests "vectors" type-check-Lfun compiler-passes "vectors_test" (tests-for "vectors"))
+(compiler-tests "functions" type-check-Lfun compiler-passes "functions_test" (tests-for "functions"))
 

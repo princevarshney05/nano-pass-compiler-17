@@ -4,8 +4,13 @@
 
 (provide (all-defined-out))
 
+;;; (define (is-vector v locals-types)
+;;;   (list? (dict-ref locals-types v #f)))
+
 (define (is-vector v locals-types)
-  (list? (dict-ref locals-types v #f)))
+  (match (dict-ref locals-types v #f)
+    [`(Vector ,T ...) #t]
+    [else #f]))
 
 (define labels->live '())
 (define (custom-live-labels-set! labels)

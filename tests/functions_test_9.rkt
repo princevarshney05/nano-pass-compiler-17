@@ -14,4 +14,4 @@
         1
         (mult (factorial (- n 1)) n)))
 
-(factorial 2)
+(factorial 5)
