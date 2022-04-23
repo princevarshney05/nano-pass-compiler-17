@@ -63,6 +63,7 @@
              (list (IndirectCallq fun (length args)) (Instr 'movq (list (Reg 'rax) var))))]
     [(Assign var (FunRef e1 e2)) (list (Instr 'leaq (list (Global e1) var)))]
     [(Assign var var2) (if (equal? var var2) '() (list (Instr 'movq (list (int-to-imm var2) var))))]
+    [(Prim 'read '()) (list (Callq 'read_int 0))]
     [(Collect bytes)
      (list (Instr 'movq (list (Reg 'r15) (Reg 'rdi)))
            (Instr 'movq (list (int-to-imm bytes) (Reg 'rsi)))
