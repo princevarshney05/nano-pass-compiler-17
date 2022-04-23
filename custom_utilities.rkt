@@ -4,8 +4,13 @@
 
 (provide (all-defined-out))
 
+;;; (define (is-vector v locals-types)
+;;;   (list? (dict-ref locals-types v #f)))
+
 (define (is-vector v locals-types)
-  (list? (dict-ref locals-types v #f)))
+  (match (dict-ref locals-types v #f)
+    [`(Vector ,T ...) #t]
+    [else #f]))
 
 (define labels->live '())
 (define (custom-live-labels-set! labels)
@@ -25,8 +30,16 @@
     ['collect (set 'rdi 'rsi)]
     [else (set)]))
 
+(define (get-argument-registers n)
+  (list->set (take (vector->list arg-registers) n)))
+
 (define (get-read-write-sets instr)
   (match instr
+    [(Instr 'leaq (list A B))
+     (define read-set (valid-set A))
+     (define write-set (valid-set B))
+     (values read-set write-set)
+    ]
     [(Instr 'movq (list A B))
      (define read-set (valid-set A))
      (define write-set (valid-set B))
@@ -58,7 +71,10 @@
      (define write-set (set))
      (values read-set write-set)]
     ;;; (values (set) caller-save)
-    [(Callq label n) (values (get-read-set-from-label label) caller-save)]
+    ;;; [(Callq label n) (values (get-read-set-from-label label) caller-save)]
+    [(Callq label n) (values (get-argument-registers n) caller-save)]
+    [ (IndirectCallq label n)  (values (set-union (valid-set label) (get-argument-registers n)) caller-save)]
+    [(TailJmp label n) (values (set-union (valid-set label) (set 'rax 'rsp) (get-argument-registers n)) caller-save)]
     [(Instr 'set (list A B))
      (define read-set (valid-set B))
      (define write-set (valid-set B))

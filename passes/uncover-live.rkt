@@ -32,28 +32,25 @@
 (define (transfer label live-after)
   (match (dict-ref blocks label)
     [(Block info instrlist)
-     ;;; (display "*****\n")
-     ;;; (print label)
-     ;;; (display "\n*****\n")
      (define live-vars (get-live-vars instrlist))
-     ;;;  (display "*****\n")
-     ;;;   (print live-vars)
-     ;;;   (display "\n*****\n")
      (define new-info (dict-set info 'live-vars (cdr live-vars)))
      (set! blocks (dict-set blocks label (Block new-info instrlist)))
      (dict-set! labels->live label (car live-vars))
      (car live-vars)]))
 
-(define (uncover-live p)
-
-  (match p
-    [(X86Program info body)
-     (set! blocks body)
+(define (uncover-live-defs def)
+  (match def
+    [(Def name params rtype info blocks-cfg)
+     (set! blocks blocks-cfg)
      (define trans-G (transpose (dict-ref info 'cfg)))
      (define temp (make-hash))
      (for ([v (in-vertices trans-G)])
        (dict-set! temp v (set)))
-     (dict-set! temp 'conclusion (set 'rax 'rsp))
+     (dict-set! temp (symbol-append name 'conclusion) (set 'rax 'rsp))
      (custom-live-labels-set! temp)
      (analyze_dataflow trans-G transfer (set) set-union)
-     (X86Program info blocks)]))
+     (Def name params rtype (dict-set info 'labels->live labels->live) blocks)]))
+
+(define (uncover-live p)
+  (match p
+    [(ProgramDefs info defs) (ProgramDefs info (map uncover-live-defs defs))]))

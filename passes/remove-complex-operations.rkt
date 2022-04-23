@@ -37,12 +37,22 @@
     [(WhileLoop es exp)
      (define key (gensym))
      (values (Var key) `((,key ,(rco-exp e))))]
+    [(FunRef es exp)
+     (define key (gensym))
+     (values (Var key) `((,key ,(rco-exp e))))]
     [(Prim op es)
      (define-values (new-exp new-env) (for/lists (l1 l2) ([e es]) (rco-atom e)))
      (define key (gensym))
      (define new-key-val-list (list (list key (Prim op new-exp))))
      (define combined-list-env (append (append* new-env) new-key-val-list))
-     (values (Var key) combined-list-env)]))
+     (values (Var key) combined-list-env)]
+    [(Apply func args)
+     (define-values (tmp-func func-pairs) (rco-atom func))
+     (define-values (tmp-args arg-pairs) (for/lists (p q) ([a args]) (rco-atom a)))
+     (define pair-list (append* arg-pairs))
+     (define key (gensym))
+     (define apply-list `((,key ,(Apply tmp-func tmp-args))))
+     (values (Var key) (append func-pairs pair-list apply-list))]))
 
 (define (normalise-env-exp env exp)
   (match env
@@ -57,6 +67,7 @@
     [(Bool t) (Bool t)]
     [(Void) (Void)]
     [(Allocate e1 e2) (Allocate e1 e2)]
+    [(FunRef es exp) (FunRef es exp)]
     [(GlobalValue e) (GlobalValue e)]
     [(Collect e) (Collect e)]
     [(GetBang x) (Var x)]
@@ -67,9 +78,19 @@
     [(WhileLoop e1 e2) (WhileLoop (rco-exp e1) (rco-exp e2))]
     [(Prim op es)
      (define-values (new-exp combined-list-env) (for/lists (l1 l2) ([e es]) (rco-atom e)))
-     (normalise-env-exp (append* combined-list-env) (Prim op new-exp))]))
+     (normalise-env-exp (append* combined-list-env) (Prim op new-exp))]
+    [(Apply func args)
+     (define-values (tmp-func func-pairs) (rco-atom func))
+     (define-values (tmp-args arg-pairs) (for/lists (p q) ([a args]) (rco-atom a)))
+     (define pair-list (append* arg-pairs))
+     (define apply-statement (Apply tmp-func tmp-args))
+     (normalise-env-exp (append func-pairs pair-list) apply-statement)]))
+
+(define (remove-complex-opera*-def def)
+  (match def
+    [(Def name param rty info body) (Def name param rty info (rco-exp body))]))
 
 ;; remove-complex-opera* : R1 -> R1
 (define (remove-complex-opera* p)
   (match p
-    [(Program info e) (Program info (rco-exp e))]))
+    [(ProgramDefs info defs) (ProgramDefs info (map remove-complex-opera*-def defs))]))

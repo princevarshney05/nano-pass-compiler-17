@@ -2,13 +2,13 @@
 #lang racket
 
 (require "utilities.rkt")
-(require "interp-Lvec.rkt")
-(require "interp-Cvec.rkt")
+(require "interp-Lfun.rkt")
+(require "interp-Cfun.rkt")
 (require "interp.rkt")
 (require "compiler.rkt")
-(require "type-check-Lvec.rkt")
-; (debug-level 1)
-; (AST-output-syntax 'concrete-syntax)
+(require "type-check-Lfun.rkt")
+;;; (debug-level 1)
+;;; (AST-output-syntax 'concrete-syntax)
 
 ;; all the files in the tests/ directory with extension ".rkt".
 (define all-tests
@@ -25,21 +25,24 @@
           (string=? r (car (string-split p "_"))))
         all-tests)))
 
-;;; (interp-tests "var" #f compiler-passes interp-Lvec "var_test" (tests-for "var"))
-;;; (interp-tests "cond" type-check-Lvec compiler-passes interp-Lvec "cond_test" (tests-for "cond"))
-;;; (interp-tests "my" type-check-Lvec compiler-passes interp-Lvec "my_test" (tests-for "my"))
-;;; (interp-tests "while" type-check-Lvec compiler-passes interp-Lvec "while_test" (tests-for "while"))
-;;; (interp-tests "vectors" type-check-Lvec compiler-passes interp-Lvec "vectors_test" (tests-for "vectors"))
+(interp-tests "var" type-check-Lfun compiler-passes interp-Lfun "var_test" (tests-for "var"))
+(interp-tests "cond" type-check-Lfun compiler-passes interp-Lfun "cond_test" (tests-for "cond"))
+(interp-tests "my" type-check-Lfun compiler-passes interp-Lfun "my_test" (tests-for "my"))
+(interp-tests "while" type-check-Lfun compiler-passes interp-Lfun "while_test" (tests-for "while"))
+(interp-tests "vectors" type-check-Lfun compiler-passes interp-Lfun "vectors_test" (tests-for "vectors"))
+(interp-tests "functions" type-check-Lfun compiler-passes interp-Lfun "functions_test" (tests-for "functions"))
 
 ; Single Interp test
-; (interp-tests "single" type-check-Lvec compiler-passes interp-Lvec "single_test" (tests-for "single"))
+(interp-tests "single" type-check-Lfun compiler-passes interp-Lfun "single_test" (tests-for "single"))
 ; Single Compiler test
-(compiler-tests "single" type-check-Lvec compiler-passes "single_test" (tests-for "single"))
+(compiler-tests "single" type-check-Lfun compiler-passes "single_test" (tests-for "single"))
 
 ; Uncomment the following when all the passes are complete to
 ; test the final x86 code.
-(compiler-tests "var" type-check-Lvec compiler-passes "var_test" (tests-for "var"))
-(compiler-tests "my" type-check-Lvec compiler-passes "my_test" (tests-for "my"))
-(compiler-tests "cond" type-check-Lvec compiler-passes "cond_test" (tests-for "cond"))
-(compiler-tests "while" type-check-Lvec compiler-passes "while_test" (tests-for "while"))
-(compiler-tests "vectors" type-check-Lvec compiler-passes "vectors_test" (tests-for "vectors"))
+(compiler-tests "var" type-check-Lfun compiler-passes "var_test" (tests-for "var"))
+(compiler-tests "my" type-check-Lfun compiler-passes "my_test" (tests-for "my"))
+(compiler-tests "cond" type-check-Lfun compiler-passes "cond_test" (tests-for "cond"))
+(compiler-tests "while" type-check-Lfun compiler-passes "while_test" (tests-for "while"))
+(compiler-tests "vectors" type-check-Lfun compiler-passes "vectors_test" (tests-for "vectors"))
+(compiler-tests "functions" type-check-Lfun compiler-passes "functions_test" (tests-for "functions"))
+

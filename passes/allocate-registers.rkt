@@ -17,6 +17,8 @@
      (Instr op
             (for/list ([e lst])
               (arg->memory e env)))]
+    [(IndirectCallq arg arity) (IndirectCallq (arg->memory arg env) arity)]
+    [(TailJmp arg arity) (TailJmp (arg->memory arg env) arity)]
     [else instr]))
 
 (define (map-instrs env lst)
@@ -53,22 +55,29 @@
                       (Deref 'rbp (- (* -8 spill-count) (* 8 (set-count used-callee)))))])])))
   (values color-map spill-count (set-intersect callee-save used-callee) num-root-spills))
 
-(define (allocate-registers p)
-  (match p
-    [(X86Program info body)
+(define (allocate-registers-defs def)
+  (match def
+    [(Def name params rtype info blocks-cfg)
+     ;;; (X86Program info body)
      (define interference-graph (dict-ref info 'conflicts))
      (define locals-types (dict-ref info 'locals-types))
      (define color-map (color-graph interference-graph))
      (define-values (color-reg spill-count used-callee num-root-spills)
        (map-registers color-map locals-types))
-     (X86Program
-      (dict-set (dict-set (dict-set info 'spill-count spill-count) 'used-callee used-callee)
-                'num-root-spills
-                num-root-spills)
-      (for/list ([block body])
-        (match block
-          [(cons label (Block binfo instrs))
-           (cons label (Block binfo (map-instrs color-reg instrs)))])))]))
+     (Def name
+          params
+          rtype
+          (dict-set (dict-set (dict-set info 'spill-count spill-count) 'used-callee used-callee)
+                    'num-root-spills
+                    num-root-spills)
+          (for/list ([block blocks-cfg])
+            (match block
+              [(cons label (Block binfo instrs))
+               (cons label (Block binfo (map-instrs color-reg instrs)))])))]))
+
+(define (allocate-registers p)
+  (match p
+    [(ProgramDefs info defs) (ProgramDefs info (map allocate-registers-defs defs))]))
 
 (define all-registers (set-union caller-save callee-save))
 

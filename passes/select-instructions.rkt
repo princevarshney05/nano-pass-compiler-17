@@ -56,15 +56,28 @@
            (Instr 'addq (list (Imm (* 8 (+ len 1))) (Global 'free_ptr)))
            (Instr 'movq (list (Imm tag) (Deref 'r11 0)))
            (Instr 'movq (list (Reg 'r11) var)))]
+    [(Assign var (Call fun args))
+     (define imm-args (map int-to-imm args))
+     (append (for/list ([reg arg-registers] [arg imm-args])
+               (Instr 'movq (list arg (Reg reg))))
+             (list (IndirectCallq fun (length args)) (Instr 'movq (list (Reg 'rax) var))))]
+    [(Assign var (FunRef e1 e2)) (list (Instr 'leaq (list (Global e1) var)))]
     [(Assign var var2) (if (equal? var var2) '() (list (Instr 'movq (list (int-to-imm var2) var))))]
+    [(Prim 'read '()) (list (Callq 'read_int 0))]
     [(Collect bytes)
      (list (Instr 'movq (list (Reg 'r15) (Reg 'rdi)))
            (Instr 'movq (list (int-to-imm bytes) (Reg 'rsi)))
-           (Callq 'collect 2))]))
+           (Callq 'collect 2))]
+    [(Call fun args)
+     (define imm-args (map int-to-imm args))
+     (append (for/list ([reg arg-registers] [arg imm-args])
+               (Instr 'movq (list arg (Reg reg))))
+             (list (IndirectCallq fun (length args))))]))
 
-(define (resolve-select-instructions e)
+(define (resolve-select-instructions t e)
   (match e
-    [(Seq instr rest-seq) (append (instruction-to-x86 instr) (resolve-select-instructions rest-seq))]
+    [(Seq instr rest-seq)
+     (append (instruction-to-x86 instr) (resolve-select-instructions t rest-seq))]
     [(IfStmt (Prim 'eq? (list e1 e2)) (Goto l1) (Goto l2))
      (list (Instr 'cmpq (list (int-to-imm e2) (int-to-imm e1))) (JmpIf 'e l1) (Jmp l2))]
     [(IfStmt (Prim '< (list e1 e2)) (Goto l1) (Goto l2))
@@ -72,10 +85,15 @@
     [(IfStmt (Prim 'vector-ref args) (Goto l1) (Goto l2))
      (append (instruction-to-x86 (Assign (Reg 'rax) (Prim 'vector-ref args)))
              (list (Instr 'cmpq (list (Reg 'rax) (Imm 1))) (JmpIf 'e l1) (Jmp l2)))]
+    [(TailCall fun args)
+     (define imm-args (map int-to-imm args))
+     (append (for/list ([reg arg-registers] [arg imm-args])
+               (Instr 'movq (list arg (Reg reg))))
+             (list (TailJmp fun (length args))))]
     [(Goto label) (list (Jmp label))]
     [(Return e)
      (define instr (Assign (Reg 'rax) e))
-     (append (instruction-to-x86 instr) (list (Jmp 'conclusion)))]))
+     (append (instruction-to-x86 instr) (list (Jmp (symbol-append t 'conclusion))))]))
 
 (define (calculate-tag types len)
   (define ptr-tag
@@ -85,10 +103,28 @@
         [_ tag])))
   (bitwise-ior ptr-tag (arithmetic-shift len 1) 1))
 
+(define (select-instr-def def)
+  (match def
+    [(Def name `([,xs : ,ts] ...) rtype info blocks)
+     (define new-blocks
+       (map (lambda (block)
+              (match block
+                [(cons label tail) (cons label (Block '() (resolve-select-instructions name tail)))]))
+            blocks))
+     (define param-instrs
+       (for/list ([reg arg-registers] [x xs])
+         (Instr 'movq (list (Reg reg) (Var x)))))
+     (define start-label (symbol-append name 'start))
+     (define new-start-block
+       (match (dict-ref new-blocks start-label)
+         [(Block info instrs) (Block info (append param-instrs instrs))]))
+     (define new-info
+       (dict-set-all info
+                     `((locals-types . ,(append (dict-ref info 'locals-types) (map cons xs ts)))
+                       (num-params . ,(length xs)))))
+     (Def name '() rtype new-info (dict-set new-blocks start-label new-start-block))]))
+
 ;; select-instructions : C0 -> pseudo-x86
 (define (select-instructions p)
   (match p
-    [(CProgram info body)
-     (X86Program info
-                 (for/list ([frame body])
-                   (cons (car frame) (Block '() (resolve-select-instructions (cdr frame))))))]))
+    [(ProgramDefs info defs) (ProgramDefs info (map select-instr-def defs))]))

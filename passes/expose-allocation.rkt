@@ -9,12 +9,15 @@
     [(Var x) (Var x)]
     [(Bool b) (Bool b)]
     [(Void) (Void)]
+    [(FunRef x y) (FunRef x y)]
+    [(GetBang x) (GetBang x)]
     [(SetBang x e) (SetBang x (expose-exp e))]
     [(Let x e1 e2) (Let x (expose-exp e1) (expose-exp e2))]
     [(If e1 e2 e3) (If (expose-exp e1) (expose-exp e2) (expose-exp e3))]
     [(Prim op es) (Prim op (map expose-exp es))]
     [(Begin es e) (Begin (map expose-exp es) (expose-exp e))]
     [(WhileLoop e1 e2) (WhileLoop (expose-exp e1) (expose-exp e2))]
+    [(Apply func args) (Apply (expose-exp func) (map expose-exp args))]
     [(HasType (Prim 'vector es) t)
      (define exposed-elements (map expose-exp es))
      (define tmp (gensym 'vec))
@@ -43,9 +46,13 @@
                   ;        (Var vecsym))))))
                   (helper vars 0 vecsym)))))
 
+(define (expose-allocation-defs def)
+  (match def
+    [(Def label args rtype info body) (Def label args rtype info (expose-exp body))]))
+
 (define (expose-allocation p)
   (match p
-    [(Program info e) (Program info (expose-exp e))]))
+    [(ProgramDefs info defs) (ProgramDefs info (map expose-allocation-defs defs))]))
 
 (define (helper vars i vecsym)
   (match vars
