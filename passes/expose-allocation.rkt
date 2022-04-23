@@ -47,16 +47,12 @@
                   (helper vars 0 vecsym)))))
 
 (define (expose-allocation-defs def)
-    (match def 
-      [(Def label args rtype info body) 
-       (Def label args rtype info (expose-exp body))
-      ]
-    )
-)
+  (match def
+    [(Def label args rtype info body) (Def label args rtype info (expose-exp body))]))
 
 (define (expose-allocation p)
   (match p
-    [(ProgramDefs info defs) (ProgramDefs info (map expose-allocation-defs defs)) ]))
+    [(ProgramDefs info defs) (ProgramDefs info (map expose-allocation-defs defs))]))
 
 (define (helper vars i vecsym)
   (match vars

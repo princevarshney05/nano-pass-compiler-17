@@ -52,8 +52,7 @@
      (define pair-list (append* arg-pairs))
      (define key (gensym))
      (define apply-list `((,key ,(Apply tmp-func tmp-args))))
-     (values (Var key) (append func-pairs pair-list apply-list))]
-     )) 
+     (values (Var key) (append func-pairs pair-list apply-list))]))
 
 (define (normalise-env-exp env exp)
   (match env
@@ -85,19 +84,13 @@
      (define-values (tmp-args arg-pairs) (for/lists (p q) ([a args]) (rco-atom a)))
      (define pair-list (append* arg-pairs))
      (define apply-statement (Apply tmp-func tmp-args))
-     (normalise-env-exp (append func-pairs pair-list) apply-statement)]     
-))
+     (normalise-env-exp (append func-pairs pair-list) apply-statement)]))
 
 (define (remove-complex-opera*-def def)
   (match def
-  [(Def name param rty info body) 
-  (Def name param rty info (rco-exp body))]
-  )
-)
+    [(Def name param rty info body) (Def name param rty info (rco-exp body))]))
 
 ;; remove-complex-opera* : R1 -> R1
 (define (remove-complex-opera* p)
   (match p
-    [(ProgramDefs info defs) 
-     (ProgramDefs info (map remove-complex-opera*-def defs)) 
-    ]))
+    [(ProgramDefs info defs) (ProgramDefs info (map remove-complex-opera*-def defs))]))

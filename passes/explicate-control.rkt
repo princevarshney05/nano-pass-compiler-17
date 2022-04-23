@@ -37,26 +37,19 @@
                    [(intmd-seq2 intmd-vars2) (explicate_effect expr intmd-seq1)])
        (values intmd-seq2 (remove-duplicates (append intmd-vars1 intmd-vars2))))]
     [(Begin (list expr rest-expr ...) expr_n)
-     (let*-values (
-       [(intmd-seq1 intmd-vars1) (explicate_tail (Begin rest-expr expr_n))]
-       [(intmd-seq2 intmd-vars2) (explicate_effect expr intmd-seq1)]
-      )
-      (values intmd-seq2 (remove-duplicates (append intmd-vars1 intmd-vars2))))
-    ;  (explicate_effect expr intmd-seq) ; todo : supply for vars in explicate_effect
-    ]
-    [
-      (WhileLoop cnd^ expr)
-      (define label-loop 'loop)
-      (let*-values (
-        [(intmd-seqexpr intmd-vars1) (explicate_effect expr (Goto label-loop))]
-        [(intmd-seqcnd^ intmd-vars2) (explicate_pred cnd^ intmd-seqexpr (Void))]
-      )
-      (set! basic-blocks (cons (cons label-loop intmd-seqcnd^) basic-blocks))
-      (define net-vars (append intmd-vars1 intmd-vars2))
-      (values (Goto label-loop) net-vars) )
-    ]
-    [(Apply func args)
-      (values (TailCall func args) '())]
+     (let*-values ([(intmd-seq1 intmd-vars1) (explicate_tail (Begin rest-expr expr_n))]
+                   [(intmd-seq2 intmd-vars2) (explicate_effect expr intmd-seq1)])
+       (values intmd-seq2 (remove-duplicates (append intmd-vars1 intmd-vars2))))
+     ;  (explicate_effect expr intmd-seq) ; todo : supply for vars in explicate_effect
+     ]
+    [(WhileLoop cnd^ expr)
+     (define label-loop 'loop)
+     (let*-values ([(intmd-seqexpr intmd-vars1) (explicate_effect expr (Goto label-loop))]
+                   [(intmd-seqcnd^ intmd-vars2) (explicate_pred cnd^ intmd-seqexpr (Void))])
+       (set! basic-blocks (cons (cons label-loop intmd-seqcnd^) basic-blocks))
+       (define net-vars (append intmd-vars1 intmd-vars2))
+       (values (Goto label-loop) net-vars))]
+    [(Apply func args) (values (TailCall func args) '())]
     [else (error "explicate_tail unhandled case" e)]))
 
 (define (explicate_assign e x cont)
@@ -118,8 +111,7 @@
         (remove-duplicates
          (append intmd-vars1 intmd-vars2 intmd-vars3))))] ; todo : supply for vars in explicate_effect
 
-    [(Apply func args)
-     (values (Seq (Assign (Var x) (Call func args)) cont) '())]
+    [(Apply func args) (values (Seq (Assign (Var x) (Call func args)) cont) '())]
 
     [else (error "explicate_assign unhandled case" e)]))
 
@@ -199,20 +191,15 @@
                    [(intmd-seq2 intmd-vars2) (explicate_effect expr intmd-seq1)])
        (values intmd-seq2 (remove-duplicates (append intmd-vars1 intmd-vars2))))]
     [(WhileLoop cnd body)
-      (define label-loop (gensym 'loop))
+     (define label-loop (gensym 'loop))
 
-      (let*-values (
-                  [(intmd-seqbdy intmd-vars1) (explicate_effect body (Goto label-loop))]
-                  [(intmd-seqcnd intmd-vars2) (explicate_pred cnd intmd-seqbdy cont)] ;;todo cont 
-      )
-      (set! basic-blocks (cons (cons label-loop intmd-seqcnd) basic-blocks))
-      (values (Goto label-loop) (remove-duplicates (append intmd-vars1 intmd-vars2))))
-    ]
-    [(Apply func args)
-     (values (Seq (Call func args) cont) '())]
-    [else (error "explicate_effect unhandled case" e)] 
-  )
-)
+     (let*-values ([(intmd-seqbdy intmd-vars1) (explicate_effect body (Goto label-loop))]
+                   [(intmd-seqcnd intmd-vars2) (explicate_pred cnd intmd-seqbdy cont)] ;;todo cont
+                   )
+       (set! basic-blocks (cons (cons label-loop intmd-seqcnd) basic-blocks))
+       (values (Goto label-loop) (remove-duplicates (append intmd-vars1 intmd-vars2))))]
+    [(Apply func args) (values (Seq (Call func args) cont) '())]
+    [else (error "explicate_effect unhandled case" e)]))
 
 ; (define (explicate-control p)
 ;   (set! basic-blocks '())
@@ -236,12 +223,14 @@
 (define (exp-ctrl-def def)
   (match def
     [(Def name param rty info body)
-      (set! basic-blocks '())
-      (let-values ([(intmd-seq intmd-vars) (explicate_tail body)])
-        (Def name param rty (dict-set info 'locals intmd-vars)
-          (cons (cons (symbol-append name 'start) intmd-seq) basic-blocks)))]))
+     (set! basic-blocks '())
+     (let-values ([(intmd-seq intmd-vars) (explicate_tail body)])
+       (Def name
+            param
+            rty
+            (dict-set info 'locals intmd-vars)
+            (cons (cons (symbol-append name 'start) intmd-seq) basic-blocks)))]))
 
 (define (explicate-control p)
   (match p
-    [(ProgramDefs info defs)
-     (ProgramDefs info (map exp-ctrl-def defs))]))
+    [(ProgramDefs info defs) (ProgramDefs info (map exp-ctrl-def defs))]))

@@ -12,10 +12,10 @@
       [(Int n) (Int n)]
       [(Bool t) (Bool t)]
       [(Void) (Void)]
-      [(Let x e body)   
-      (define newenv (dict-copy env))
-      (dict-set! newenv x (gensym x))
-      (Let (dict-ref newenv x) ((uniquify-exp env) e) ((uniquify-exp newenv) body))]
+      [(Let x e body)
+       (define newenv (dict-copy env))
+       (dict-set! newenv x (gensym x))
+       (Let (dict-ref newenv x) ((uniquify-exp env) e) ((uniquify-exp newenv) body))]
       [(If e1 e2 e3) (If ((uniquify-exp env) e1) ((uniquify-exp env) e2) ((uniquify-exp env) e3))]
       [(SetBang x e) (SetBang (dict-ref env x) ((uniquify-exp env) e))]
       [(Begin es exp) (Begin (map (uniquify-exp env) es) ((uniquify-exp env) exp))]
@@ -29,35 +29,29 @@
 
 (define (rename-func-defs defs)
   (define def-map (make-hash))
-  (
-    for ([def defs])
+  (for ([def defs])
     (match def
-      [(Def label args rtype info body) (
-        if (eq? label 'main)
-          (dict-set! def-map label 'main)
-          (dict-set! def-map label (gensym label))
-      )]
-    )
-  )
-  def-map
-)
+      [(Def label args rtype info body)
+       (if (eq? label 'main)
+           (dict-set! def-map label 'main)
+           (dict-set! def-map label (gensym label)))]))
+  def-map)
 
 (define (uniquify-defs def-map)
   (lambda (def)
     (match def
-      [(Def label args rtype info body) 
-        (define new-env def-map)
-        (define new-label (dict-ref def-map label))
-        (define new-args '())
-        (for ([arg args]) 
-          (dict-set! new-env (car arg) (gensym (car arg)))
-          (set! new-args (append new-args (list (cons (dict-ref new-env (car arg)) (cdr arg))) ))
-        )   
-        (Def new-label new-args rtype info ((uniquify-exp new-env) body))])))
+      [(Def label args rtype info body)
+       (define new-env def-map)
+       (define new-label (dict-ref def-map label))
+       (define new-args '())
+       (for ([arg args])
+         (dict-set! new-env (car arg) (gensym (car arg)))
+         (set! new-args (append new-args (list (cons (dict-ref new-env (car arg)) (cdr arg))))))
+       (Def new-label new-args rtype info ((uniquify-exp new-env) body))])))
 
 ;; uniquify : R1 -> R1
 (define (uniquify p)
   (match p
     [(ProgramDefs info defs)
-      (define def-map (rename-func-defs defs))
+     (define def-map (rename-func-defs defs))
      (ProgramDefs info (map (uniquify-defs def-map) defs))]))
