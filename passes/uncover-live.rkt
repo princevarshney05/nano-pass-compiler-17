@@ -38,7 +38,6 @@
      (dict-set! labels->live label (car live-vars))
      (car live-vars)]))
 
-
 (define (uncover-live-defs def)
   (match def
     [(Def name params rtype info blocks-cfg)

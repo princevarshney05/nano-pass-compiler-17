@@ -17,8 +17,6 @@
               (add-directed-edge! g block label-target))]
            [else g]))])))
 
-
-
 (define (build-cfg-defs def)
   (match def
     [(Def name params rtype info blocks)

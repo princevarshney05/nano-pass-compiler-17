@@ -68,7 +68,8 @@
     ;;; (values (set) caller-save)
     ;;; [(Callq label n) (values (get-read-set-from-label label) caller-save)]
     [(Callq label n) (values (get-argument-registers n) caller-save)]
-    [ (or (IndirectCallq label n) (TailJmp label n))  (values (set-union (valid-set label) (get-argument-registers n)) caller-save)]
+    [ (IndirectCallq label n)  (values (set-union (valid-set label) (get-argument-registers n)) caller-save)]
+    [(TailJmp label n) (values (set-union (valid-set label) (set 'rax 'rsp) (get-argument-registers n)) caller-save)]
     [(Instr 'set (list A B))
      (define read-set (valid-set B))
      (define write-set (valid-set B))

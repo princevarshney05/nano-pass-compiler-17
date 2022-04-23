@@ -70,7 +70,7 @@
     ("build cfg" ,build-cfg ,interp-pseudo-x86-3)
     ("uncover live" ,uncover-live ,interp-pseudo-x86-3)
     ("build interference graph" ,build-interference-graph ,interp-pseudo-x86-3)
-    ; ; ("allocate registers" ,allocate-registers ,interp-pseudo-x86-2)
+    ("allocate registers" ,allocate-registers ,interp-pseudo-x86-3)
     ; ; ("patch instructions" ,patch-instructions ,interp-x86-1)
     ; ; ("prelude-and-conclusion" ,prelude-and-conclusion ,interp-x86-1)
     ))
