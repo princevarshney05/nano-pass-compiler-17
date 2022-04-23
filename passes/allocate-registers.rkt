@@ -1,10 +1,10 @@
 #lang racket
 (require "../utilities.rkt")
 (require "../priority_queue.rkt")
+(require "../custom_utilities.rkt")
 (require graph)
 
 (provide allocate-registers)
-
 
 (define (arg->memory arg env)
   (match arg
@@ -26,7 +26,7 @@
 
 (define active_reg_count 11)
 
-(define (map-registers color-map)
+(define (map-registers color-map locals-types)
   (define spill-count 0)
   (define used-callee (set))
   (dict-for-each color-map
@@ -34,45 +34,52 @@
                    (when (< v active_reg_count)
                      (set! used-callee (set-add used-callee (dict-ref num-to-reg v))))))
   (set! used-callee (set-intersect callee-save used-callee))
+  (define num-root-spills 0)
   (dict-for-each
-    color-map
-    (lambda (k v)
+   color-map
+   (lambda (k v)
      (match (< v active_reg_count)
-       [#t
-        (dict-set! color-map k (Reg (dict-ref num-to-reg v)))
-        ]
+       [#t (dict-set! color-map k (Reg (dict-ref num-to-reg v)))]
        [#f
-        (dict-set! color-map k (Deref 'rbp (- (* (- 8) (- v (- active_reg_count 1))) (* 8 (set-count used-callee))))) 
-        (set! spill-count (+ spill-count 1))])))
-  (values color-map spill-count (set-intersect callee-save used-callee))
-)
+        (match (is-vector k locals-types)
+          [#t
 
+           (dict-set! color-map k (Deref 'r15 (* 8 num-root-spills)))
+           (set! num-root-spills (+ num-root-spills 1))]
+          [#f
+           (set! spill-count (+ spill-count 1))
+           (dict-set! color-map
+                      k
+                      (Deref 'rbp (- (* -8 spill-count) (* 8 (set-count used-callee)))))])])))
+  (values color-map spill-count (set-intersect callee-save used-callee) num-root-spills))
 
 (define (allocate-registers p)
   (match p
     [(X86Program info body)
      (define interference-graph (dict-ref info 'conflicts))
+     (define locals-types (dict-ref info 'locals-types))
      (define color-map (color-graph interference-graph))
-     (define-values (color-reg spill-count used-callee) (map-registers color-map))
-     (X86Program (dict-set (dict-set info 'spill-count spill-count) 'used-callee used-callee)
-        (for/list ([block body])
-            (match block
-                [(cons label (Block binfo instrs))
-                 (cons label (Block binfo (map-instrs color-reg instrs)))])))
-    ]
-  )
-)
+     (define-values (color-reg spill-count used-callee num-root-spills)
+       (map-registers color-map locals-types))
+     (X86Program
+      (dict-set (dict-set (dict-set info 'spill-count spill-count) 'used-callee used-callee)
+                'num-root-spills
+                num-root-spills)
+      (for/list ([block body])
+        (match block
+          [(cons label (Block binfo instrs))
+           (cons label (Block binfo (map-instrs color-reg instrs)))])))]))
 
 (define all-registers (set-union caller-save callee-save))
 
 (define num-to-reg
   (dict-set* #hash()
-              -5
-              'r15
-              -4
-              'rbp
-              -3
-              'r11
+             -5
+             'r15
+             -4
+             'rbp
+             -3
+             'r11
              -2
              'rsp
              -1
@@ -102,12 +109,12 @@
 
 (define reg-to-num
   (dict-set* #hash()
-              'r15
-              -5
-              'rbp
-              -4
-              'r11
-              -3
+             'r15
+             -5
+             'rbp
+             -4
+             'r11
+             -3
              'rsp
              -2
              'rax
@@ -135,60 +142,51 @@
              'rdi
              10))
 
-
 (define (color-graph interference-graph)
-    (define nodes (list->set (get-vertices interference-graph)))
-    (define regs-in-graph (set-intersect all-registers (list->set nodes)))
-    (define all-vars (set-subtract nodes regs-in-graph))
-    (define already_assigned_colors (make-hash))
+  (define nodes (list->set (get-vertices interference-graph)))
+  (define regs-in-graph (set-intersect all-registers (list->set nodes)))
+  (define all-vars (set-subtract nodes regs-in-graph))
+  (define already_assigned_colors (make-hash))
 
-    ; initialising the already-assigned-colors for each node
-    (for ([vertex nodes])
-       (dict-set! already_assigned_colors vertex '()))
-    
-    ; assigning exception numbers to neighbours of registers
-    (for ([reg regs-in-graph])
-        (for ([node (in-neighbors interference-graph reg)])
-            (dict-set! already_assigned_colors
-                node 
-                (set-add (dict-ref already_assigned_colors node)
-                    (dict-ref reg-to-num reg)
-                )
-            )
-        )
-    )
+  ; initialising the already-assigned-colors for each node
+  (for ([vertex nodes])
+    (dict-set! already_assigned_colors vertex '()))
 
-     ; inserting in priority queue
-    (define pq
-        (make-pqueue (lambda (a b)
-                    (> (length (dict-ref already_assigned_colors a))
-                        (length (dict-ref already_assigned_colors b))))))
-    
-    (define node_references (make-hash))
+  ; assigning exception numbers to neighbours of registers
+  (for ([reg regs-in-graph])
+    (for ([node (in-neighbors interference-graph reg)])
+      (dict-set! already_assigned_colors
+                 node
+                 (set-add (dict-ref already_assigned_colors node) (dict-ref reg-to-num reg)))))
 
-    (for/list ([var all-vars])
-        (define node_ref (pqueue-push! pq var))
-        (dict-set! node_references var node_ref)
-    )
+  ; inserting in priority queue
+  (define pq
+    (make-pqueue (lambda (a b)
+                   (> (length (dict-ref already_assigned_colors a))
+                      (length (dict-ref already_assigned_colors b))))))
 
-    (define result (make-hash))
+  (define node_references (make-hash))
 
-    ; traverse priority queue
-    (for ([i (pqueue-count pq)])
-        (let ([var (pqueue-pop! pq)])
-            (define cols (dict-ref already_assigned_colors var))
-            (define assigned-color (get-min-color cols 0))
-            (dict-set! result var assigned-color)
-            (define neighbor-vars (set-intersect (list->set (get-neighbors interference-graph var)) all-vars))
-            (for ([node neighbor-vars])
-                (dict-set! already_assigned_colors node
-                            (set-add (dict-ref already_assigned_colors node) assigned-color))
-                (pqueue-decrease-key! pq (dict-ref node_references node))
-            )
-        )
-    )
-    result
-)
+  (for/list ([var all-vars])
+    (define node_ref (pqueue-push! pq var))
+    (dict-set! node_references var node_ref))
+
+  (define result (make-hash))
+
+  ; traverse priority queue
+  (for ([i (pqueue-count pq)])
+    (let ([var (pqueue-pop! pq)])
+      (define cols (dict-ref already_assigned_colors var))
+      (define assigned-color (get-min-color cols 0))
+      (dict-set! result var assigned-color)
+      (define neighbor-vars
+        (set-intersect (list->set (get-neighbors interference-graph var)) all-vars))
+      (for ([node neighbor-vars])
+        (dict-set! already_assigned_colors
+                   node
+                   (set-add (dict-ref already_assigned_colors node) assigned-color))
+        (pqueue-decrease-key! pq (dict-ref node_references node)))))
+  result)
 
 (define (get-min-color color-set n)
   (if (equal? (member n color-set) #f) n (get-min-color color-set (+ n 1))))

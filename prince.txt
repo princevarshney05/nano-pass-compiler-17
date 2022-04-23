@@ -1,0 +1,2634 @@
+racket run-tests.rkt
+type checker output: @ utilities.rkt:1999
+(strip-has-type tsexp):
+program:
+(let ([v (vector 1 2)])
+   42)
+
+
+testing @ utilities.rkt:2016
+test-name:
+"single_test_1"
+
+expected-result:
+42
+
+
+running pass: shrink @ utilities.rkt:2027
+
+pass output:  @ utilities.rkt:2030
+(strip-has-type new-p^):
+program:
+(let ([v (vector 1 2)])
+   42)
+
+
+type checking... @ utilities.rkt:2032
+
+type-check output:  @ utilities.rkt:2035
+(strip-has-type new-p):
+program:
+(let ([v (vector 1 2)])
+   42)
+
+
+output:  @ utilities.rkt:2042
+result:
+42
+
+
+testing @ utilities.rkt:2016
+test-name:
+"single_test_1"
+
+expected-result:
+42
+
+
+running pass: uniquify @ utilities.rkt:2027
+
+pass output:  @ utilities.rkt:2030
+(strip-has-type new-p^):
+program:
+(let ([v44866 (vector 1 2)])
+   42)
+
+
+type checking... @ utilities.rkt:2032
+
+type-check output:  @ utilities.rkt:2035
+(strip-has-type new-p):
+program:
+(let ([v44866 (vector 1 2)])
+   42)
+
+
+output:  @ utilities.rkt:2042
+result:
+42
+
+
+testing @ utilities.rkt:2016
+test-name:
+"single_test_1"
+
+expected-result:
+42
+
+
+running pass: expose-allocation @ utilities.rkt:2027
+
+pass output:  @ utilities.rkt:2030
+(strip-has-type new-p^):
+program:
+(let ([v44866 (let ([tmpv44868 1])
+                 (let ([tmpv44869 2])
+                    (begin 
+                       (if (< (+ (global-value free_ptr) 24) (global-value fromspace_end))
+                          (void)
+                          (collect 24))
+                       
+                       (let ([vec44867 (allocate 2 (Vector Integer Integer))])
+                          (let ([_44870 (vector-set! vec44867 0 tmpv44868)])
+                             (let ([_44871 (vector-set! vec44867 1 tmpv44869)])
+                                vec44867))))))])
+   42)
+
+
+type checking... @ utilities.rkt:2032
+
+type-check output:  @ utilities.rkt:2035
+(strip-has-type new-p):
+program:
+(let ([v44866 (let ([tmpv44868 1])
+                 (let ([tmpv44869 2])
+                    (begin 
+                       (if (< (+ (global-value free_ptr) 24) (global-value fromspace_end))
+                          (void)
+                          (collect 24))
+                       
+                       (let ([vec44867 (allocate 2 (Vector Integer Integer))])
+                          (let ([_44870 (vector-set! vec44867 0 tmpv44868)])
+                             (let ([_44871 (vector-set! vec44867 1 tmpv44869)])
+                                vec44867))))))])
+   42)
+
+
+output:  @ utilities.rkt:2042
+result:
+42
+
+
+testing @ utilities.rkt:2016
+test-name:
+"single_test_1"
+
+expected-result:
+42
+
+
+running pass: uncover get @ utilities.rkt:2027
+
+pass output:  @ utilities.rkt:2030
+(strip-has-type new-p^):
+program:
+(let ([v44866 (let ([tmpv44868 1])
+                 (let ([tmpv44869 2])
+                    (begin 
+                       (if (< (+ (global-value free_ptr) 24) (global-value fromspace_end))
+                          (void)
+                          (collect 24))
+                       
+                       (let ([vec44867 (allocate 2 (Vector Integer Integer))])
+                          (let ([_44870 (vector-set! vec44867 0 tmpv44868)])
+                             (let ([_44871 (vector-set! vec44867 1 tmpv44869)])
+                                vec44867))))))])
+   42)
+
+
+type checking... @ utilities.rkt:2032
+
+type-check output:  @ utilities.rkt:2035
+(strip-has-type new-p):
+program:
+(let ([v44866 (let ([tmpv44868 1])
+                 (let ([tmpv44869 2])
+                    (begin 
+                       (if (< (+ (global-value free_ptr) 24) (global-value fromspace_end))
+                          (void)
+                          (collect 24))
+                       
+                       (let ([vec44867 (allocate 2 (Vector Integer Integer))])
+                          (let ([_44870 (vector-set! vec44867 0 tmpv44868)])
+                             (let ([_44871 (vector-set! vec44867 1 tmpv44869)])
+                                vec44867))))))])
+   42)
+
+
+output:  @ utilities.rkt:2042
+result:
+42
+
+
+testing @ utilities.rkt:2016
+test-name:
+"single_test_1"
+
+expected-result:
+42
+
+
+running pass: remove complex opera* @ utilities.rkt:2027
+
+pass output:  @ utilities.rkt:2030
+(strip-has-type new-p^):
+program:
+(let ([v44866 (let ([tmpv44868 1])
+                 (let ([tmpv44869 2])
+                    (begin 
+                       (if (let ([g44872 (global-value free_ptr)])
+                              (let ([g44873 (+ g44872 24)])
+                                 (let ([g44874 (global-value fromspace_end)])
+                                    (< g44873 g44874))))
+                          (void)
+                          (collect 24))
+                       
+                       (let ([vec44867 (allocate 2 (Vector Integer Integer))])
+                          (let ([_44870 (vector-set! vec44867 0 tmpv44868)])
+                             (let ([_44871 (vector-set! vec44867 1 tmpv44869)])
+                                vec44867))))))])
+   42)
+
+
+type checking... @ utilities.rkt:2032
+
+type-check output:  @ utilities.rkt:2035
+(strip-has-type new-p):
+program:
+(let ([v44866 (let ([tmpv44868 1])
+                 (let ([tmpv44869 2])
+                    (begin 
+                       (if (let ([g44872 (global-value free_ptr)])
+                              (let ([g44873 (+ g44872 24)])
+                                 (let ([g44874 (global-value fromspace_end)])
+                                    (< g44873 g44874))))
+                          (void)
+                          (collect 24))
+                       
+                       (let ([vec44867 (allocate 2 (Vector Integer Integer))])
+                          (let ([_44870 (vector-set! vec44867 0 tmpv44868)])
+                             (let ([_44871 (vector-set! vec44867 1 tmpv44869)])
+                                vec44867))))))])
+   42)
+
+
+output:  @ utilities.rkt:2042
+result:
+42
+
+
+testing @ utilities.rkt:2016
+test-name:
+"single_test_1"
+
+expected-result:
+42
+
+
+running pass: explicate control @ utilities.rkt:2027
+
+pass output:  @ utilities.rkt:2030
+(strip-has-type new-p^):
+program:
+locals:
+'(_44871 _44870 vec44867 g44874 g44873 g44872 tmpv44869 tmpv44868 v44866)
+start:
+    tmpv44868 = 1;
+    tmpv44869 = 2;
+    g44872 = (global-value free_ptr);
+    g44873 = (+ g44872 24);
+    g44874 = (global-value fromspace_end);
+    if (< g44873 g44874)
+       goto block44875;
+    else
+       goto block44876;
+block44876:
+    (collect 24)
+    vec44867 = (allocate 2 (Vector Integer Integer));
+    _44870 = (vector-set! vec44867 0 tmpv44868);
+    _44871 = (vector-set! vec44867 1 tmpv44869);
+    v44866 = vec44867;
+    return 42;
+block44875:
+    vec44867 = (allocate 2 (Vector Integer Integer));
+    _44870 = (vector-set! vec44867 0 tmpv44868);
+    _44871 = (vector-set! vec44867 1 tmpv44869);
+    v44866 = vec44867;
+    return 42;
+
+
+
+type checking... @ utilities.rkt:2032
+
+type-check output:  @ utilities.rkt:2035
+(strip-has-type new-p):
+program:
+locals:
+'(_44871 _44870 vec44867 g44874 g44873 g44872 tmpv44869 tmpv44868 v44866)
+locals-types:
+    v44866 : '(Vector Integer Integer), vec44867 : '(Vector Integer Integer), g44872 : 'Integer, g44873 : 'Integer, g44874 : 'Integer, tmpv44868 : 'Integer, tmpv44869 : 'Integer, _44870 : 'Void, _44871 : 'Void, 
+start:
+    tmpv44868 = 1;
+    tmpv44869 = 2;
+    g44872 = (global-value free_ptr);
+    g44873 = (+ g44872 24);
+    g44874 = (global-value fromspace_end);
+    if (< g44873 g44874)
+       goto block44875;
+    else
+       goto block44876;
+block44876:
+    (collect 24)
+    vec44867 = (allocate 2 (Vector Integer Integer));
+    _44870 = (vector-set! vec44867 0 tmpv44868);
+    _44871 = (vector-set! vec44867 1 tmpv44869);
+    v44866 = vec44867;
+    return 42;
+block44875:
+    vec44867 = (allocate 2 (Vector Integer Integer));
+    _44870 = (vector-set! vec44867 0 tmpv44868);
+    _44871 = (vector-set! vec44867 1 tmpv44869);
+    v44866 = vec44867;
+    return 42;
+
+
+
+output:  @ utilities.rkt:2042
+result:
+42
+
+
+testing @ utilities.rkt:2016
+test-name:
+"single_test_1"
+
+expected-result:
+42
+
+
+running pass: instruction selection @ utilities.rkt:2027
+
+pass output:  @ utilities.rkt:2030
+(strip-has-type new-p^):
+program:
+locals:
+'(_44871 _44870 vec44867 g44874 g44873 g44872 tmpv44869 tmpv44868 v44866)
+locals-types:
+    v44866 : '(Vector Integer Integer), vec44867 : '(Vector Integer Integer), g44872 : 'Integer, g44873 : 'Integer, g44874 : 'Integer, tmpv44868 : 'Integer, tmpv44869 : 'Integer, _44870 : 'Void, _44871 : 'Void, 
+start:
+    movq $1, tmpv44868
+    movq $2, tmpv44869
+    movq free_ptr(%rip), g44872
+    movq g44872, g44873
+    addq $24, g44873
+    movq fromspace_end(%rip), g44874
+    cmpq g44874, g44873
+    jl block44875
+    jmp block44876
+    
+block44876:
+    movq %r15, %rdi
+    movq $24, %rsi
+    callq collect
+    movq free_ptr(%rip), %r11
+    addq $24, free_ptr(%rip)
+    movq $5, 0(%r11)
+    movq %r11, vec44867
+    movq vec44867, %r11
+    movq tmpv44868, 8(%r11)
+    movq $0, _44870
+    movq vec44867, %r11
+    movq tmpv44869, 16(%r11)
+    movq $0, _44871
+    movq vec44867, v44866
+    movq $42, %rax
+    jmp conclusion
+    
+block44875:
+    movq free_ptr(%rip), %r11
+    addq $24, free_ptr(%rip)
+    movq $5, 0(%r11)
+    movq %r11, vec44867
+    movq vec44867, %r11
+    movq tmpv44868, 8(%r11)
+    movq $0, _44870
+    movq vec44867, %r11
+    movq tmpv44869, 16(%r11)
+    movq $0, _44871
+    movq vec44867, v44866
+    movq $42, %rax
+    jmp conclusion
+    
+
+
+
+type-check output:  @ utilities.rkt:2035
+(strip-has-type new-p):
+program:
+locals:
+'(_44871 _44870 vec44867 g44874 g44873 g44872 tmpv44869 tmpv44868 v44866)
+locals-types:
+    v44866 : '(Vector Integer Integer), vec44867 : '(Vector Integer Integer), g44872 : 'Integer, g44873 : 'Integer, g44874 : 'Integer, tmpv44868 : 'Integer, tmpv44869 : 'Integer, _44870 : 'Void, _44871 : 'Void, 
+start:
+    movq $1, tmpv44868
+    movq $2, tmpv44869
+    movq free_ptr(%rip), g44872
+    movq g44872, g44873
+    addq $24, g44873
+    movq fromspace_end(%rip), g44874
+    cmpq g44874, g44873
+    jl block44875
+    jmp block44876
+    
+block44876:
+    movq %r15, %rdi
+    movq $24, %rsi
+    callq collect
+    movq free_ptr(%rip), %r11
+    addq $24, free_ptr(%rip)
+    movq $5, 0(%r11)
+    movq %r11, vec44867
+    movq vec44867, %r11
+    movq tmpv44868, 8(%r11)
+    movq $0, _44870
+    movq vec44867, %r11
+    movq tmpv44869, 16(%r11)
+    movq $0, _44871
+    movq vec44867, v44866
+    movq $42, %rax
+    jmp conclusion
+    
+block44875:
+    movq free_ptr(%rip), %r11
+    addq $24, free_ptr(%rip)
+    movq $5, 0(%r11)
+    movq %r11, vec44867
+    movq vec44867, %r11
+    movq tmpv44868, 8(%r11)
+    movq $0, _44870
+    movq vec44867, %r11
+    movq tmpv44869, 16(%r11)
+    movq $0, _44871
+    movq vec44867, v44866
+    movq $42, %rax
+    jmp conclusion
+    
+
+
+
+output:  @ utilities.rkt:2042
+result:
+42
+
+
+testing @ utilities.rkt:2016
+test-name:
+"single_test_1"
+
+expected-result:
+42
+
+
+running pass: build cfg @ utilities.rkt:2027
+
+pass output:  @ utilities.rkt:2030
+(strip-has-type new-p^):
+program:
+locals:
+'(_44871 _44870 vec44867 g44874 g44873 g44872 tmpv44869 tmpv44868 v44866)
+locals-types:
+    v44866 : '(Vector Integer Integer), vec44867 : '(Vector Integer Integer), g44872 : 'Integer, g44873 : 'Integer, g44874 : 'Integer, tmpv44868 : 'Integer, tmpv44869 : 'Integer, _44870 : 'Void, _44871 : 'Void, 
+cfg:
+#<unweighted-graph>
+start:
+    movq $1, tmpv44868
+    movq $2, tmpv44869
+    movq free_ptr(%rip), g44872
+    movq g44872, g44873
+    addq $24, g44873
+    movq fromspace_end(%rip), g44874
+    cmpq g44874, g44873
+    jl block44875
+    jmp block44876
+    
+block44876:
+    movq %r15, %rdi
+    movq $24, %rsi
+    callq collect
+    movq free_ptr(%rip), %r11
+    addq $24, free_ptr(%rip)
+    movq $5, 0(%r11)
+    movq %r11, vec44867
+    movq vec44867, %r11
+    movq tmpv44868, 8(%r11)
+    movq $0, _44870
+    movq vec44867, %r11
+    movq tmpv44869, 16(%r11)
+    movq $0, _44871
+    movq vec44867, v44866
+    movq $42, %rax
+    jmp conclusion
+    
+block44875:
+    movq free_ptr(%rip), %r11
+    addq $24, free_ptr(%rip)
+    movq $5, 0(%r11)
+    movq %r11, vec44867
+    movq vec44867, %r11
+    movq tmpv44868, 8(%r11)
+    movq $0, _44870
+    movq vec44867, %r11
+    movq tmpv44869, 16(%r11)
+    movq $0, _44871
+    movq vec44867, v44866
+    movq $42, %rax
+    jmp conclusion
+    
+
+
+
+type-check output:  @ utilities.rkt:2035
+(strip-has-type new-p):
+program:
+locals:
+'(_44871 _44870 vec44867 g44874 g44873 g44872 tmpv44869 tmpv44868 v44866)
+locals-types:
+    v44866 : '(Vector Integer Integer), vec44867 : '(Vector Integer Integer), g44872 : 'Integer, g44873 : 'Integer, g44874 : 'Integer, tmpv44868 : 'Integer, tmpv44869 : 'Integer, _44870 : 'Void, _44871 : 'Void, 
+cfg:
+#<unweighted-graph>
+start:
+    movq $1, tmpv44868
+    movq $2, tmpv44869
+    movq free_ptr(%rip), g44872
+    movq g44872, g44873
+    addq $24, g44873
+    movq fromspace_end(%rip), g44874
+    cmpq g44874, g44873
+    jl block44875
+    jmp block44876
+    
+block44876:
+    movq %r15, %rdi
+    movq $24, %rsi
+    callq collect
+    movq free_ptr(%rip), %r11
+    addq $24, free_ptr(%rip)
+    movq $5, 0(%r11)
+    movq %r11, vec44867
+    movq vec44867, %r11
+    movq tmpv44868, 8(%r11)
+    movq $0, _44870
+    movq vec44867, %r11
+    movq tmpv44869, 16(%r11)
+    movq $0, _44871
+    movq vec44867, v44866
+    movq $42, %rax
+    jmp conclusion
+    
+block44875:
+    movq free_ptr(%rip), %r11
+    addq $24, free_ptr(%rip)
+    movq $5, 0(%r11)
+    movq %r11, vec44867
+    movq vec44867, %r11
+    movq tmpv44868, 8(%r11)
+    movq $0, _44870
+    movq vec44867, %r11
+    movq tmpv44869, 16(%r11)
+    movq $0, _44871
+    movq vec44867, v44866
+    movq $42, %rax
+    jmp conclusion
+    
+
+
+
+output:  @ utilities.rkt:2042
+result:
+42
+
+
+testing @ utilities.rkt:2016
+test-name:
+"single_test_1"
+
+expected-result:
+42
+
+
+running pass: uncover live @ utilities.rkt:2027
+
+pass output:  @ utilities.rkt:2030
+(strip-has-type new-p^):
+program:
+locals:
+'(_44871 _44870 vec44867 g44874 g44873 g44872 tmpv44869 tmpv44868 v44866)
+locals-types:
+    v44866 : '(Vector Integer Integer), vec44867 : '(Vector Integer Integer), g44872 : 'Integer, g44873 : 'Integer, g44874 : 'Integer, tmpv44868 : 'Integer, tmpv44869 : 'Integer, _44870 : 'Void, _44871 : 'Void, 
+cfg:
+#<unweighted-graph>
+start:
+    live-vars:
+(list
+ (set 'tmpv44868 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44872 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'g44874 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set))
+movq $1, tmpv44868
+movq $2, tmpv44869
+movq free_ptr(%rip), g44872
+movq g44872, g44873
+addq $24, g44873
+movq fromspace_end(%rip), g44874
+cmpq g44874, g44873
+jl block44875
+jmp block44876
+
+block44876:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq %r15, %rdi
+movq $24, %rsi
+callq collect
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, vec44867
+movq vec44867, %r11
+movq tmpv44868, 8(%r11)
+movq $0, _44870
+movq vec44867, %r11
+movq tmpv44869, 16(%r11)
+movq $0, _44871
+movq vec44867, v44866
+movq $42, %rax
+jmp conclusion
+
+block44875:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, vec44867
+movq vec44867, %r11
+movq tmpv44868, 8(%r11)
+movq $0, _44870
+movq vec44867, %r11
+movq tmpv44869, 16(%r11)
+movq $0, _44871
+movq vec44867, v44866
+movq $42, %rax
+jmp conclusion
+
+
+
+
+type-check output:  @ utilities.rkt:2035
+(strip-has-type new-p):
+program:
+locals:
+'(_44871 _44870 vec44867 g44874 g44873 g44872 tmpv44869 tmpv44868 v44866)
+locals-types:
+    v44866 : '(Vector Integer Integer), vec44867 : '(Vector Integer Integer), g44872 : 'Integer, g44873 : 'Integer, g44874 : 'Integer, tmpv44868 : 'Integer, tmpv44869 : 'Integer, _44870 : 'Void, _44871 : 'Void, 
+cfg:
+#<unweighted-graph>
+start:
+    live-vars:
+(list
+ (set 'tmpv44868 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44872 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'g44874 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set))
+movq $1, tmpv44868
+movq $2, tmpv44869
+movq free_ptr(%rip), g44872
+movq g44872, g44873
+addq $24, g44873
+movq fromspace_end(%rip), g44874
+cmpq g44874, g44873
+jl block44875
+jmp block44876
+
+block44876:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq %r15, %rdi
+movq $24, %rsi
+callq collect
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, vec44867
+movq vec44867, %r11
+movq tmpv44868, 8(%r11)
+movq $0, _44870
+movq vec44867, %r11
+movq tmpv44869, 16(%r11)
+movq $0, _44871
+movq vec44867, v44866
+movq $42, %rax
+jmp conclusion
+
+block44875:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, vec44867
+movq vec44867, %r11
+movq tmpv44868, 8(%r11)
+movq $0, _44870
+movq vec44867, %r11
+movq tmpv44869, 16(%r11)
+movq $0, _44871
+movq vec44867, v44866
+movq $42, %rax
+jmp conclusion
+
+
+
+
+output:  @ utilities.rkt:2042
+result:
+42
+
+
+testing @ utilities.rkt:2016
+test-name:
+"single_test_1"
+
+expected-result:
+42
+
+
+running pass: build interference graph @ utilities.rkt:2027
+
+pass output:  @ utilities.rkt:2030
+(strip-has-type new-p^):
+program:
+locals-types:
+    v44866 : '(Vector Integer Integer), vec44867 : '(Vector Integer Integer), g44872 : 'Integer, g44873 : 'Integer, g44874 : 'Integer, tmpv44868 : 'Integer, tmpv44869 : 'Integer, _44870 : 'Void, _44871 : 'Void, 
+cfg:
+#<unweighted-graph>
+locals:
+'(_44871 _44870 vec44867 g44874 g44873 g44872 tmpv44869 tmpv44868 v44866)
+conflicts:
+#<unweighted-graph>
+start:
+    live-vars:
+(list
+ (set 'tmpv44868 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44872 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'g44874 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set))
+movq $1, tmpv44868
+movq $2, tmpv44869
+movq free_ptr(%rip), g44872
+movq g44872, g44873
+addq $24, g44873
+movq fromspace_end(%rip), g44874
+cmpq g44874, g44873
+jl block44875
+jmp block44876
+
+block44876:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq %r15, %rdi
+movq $24, %rsi
+callq collect
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, vec44867
+movq vec44867, %r11
+movq tmpv44868, 8(%r11)
+movq $0, _44870
+movq vec44867, %r11
+movq tmpv44869, 16(%r11)
+movq $0, _44871
+movq vec44867, v44866
+movq $42, %rax
+jmp conclusion
+
+block44875:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, vec44867
+movq vec44867, %r11
+movq tmpv44868, 8(%r11)
+movq $0, _44870
+movq vec44867, %r11
+movq tmpv44869, 16(%r11)
+movq $0, _44871
+movq vec44867, v44866
+movq $42, %rax
+jmp conclusion
+
+
+
+
+type-check output:  @ utilities.rkt:2035
+(strip-has-type new-p):
+program:
+locals-types:
+    v44866 : '(Vector Integer Integer), vec44867 : '(Vector Integer Integer), g44872 : 'Integer, g44873 : 'Integer, g44874 : 'Integer, tmpv44868 : 'Integer, tmpv44869 : 'Integer, _44870 : 'Void, _44871 : 'Void, 
+cfg:
+#<unweighted-graph>
+locals:
+'(_44871 _44870 vec44867 g44874 g44873 g44872 tmpv44869 tmpv44868 v44866)
+conflicts:
+#<unweighted-graph>
+start:
+    live-vars:
+(list
+ (set 'tmpv44868 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44872 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'g44874 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set))
+movq $1, tmpv44868
+movq $2, tmpv44869
+movq free_ptr(%rip), g44872
+movq g44872, g44873
+addq $24, g44873
+movq fromspace_end(%rip), g44874
+cmpq g44874, g44873
+jl block44875
+jmp block44876
+
+block44876:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq %r15, %rdi
+movq $24, %rsi
+callq collect
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, vec44867
+movq vec44867, %r11
+movq tmpv44868, 8(%r11)
+movq $0, _44870
+movq vec44867, %r11
+movq tmpv44869, 16(%r11)
+movq $0, _44871
+movq vec44867, v44866
+movq $42, %rax
+jmp conclusion
+
+block44875:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, vec44867
+movq vec44867, %r11
+movq tmpv44868, 8(%r11)
+movq $0, _44870
+movq vec44867, %r11
+movq tmpv44869, 16(%r11)
+movq $0, _44871
+movq vec44867, v44866
+movq $42, %rax
+jmp conclusion
+
+
+
+
+output:  @ utilities.rkt:2042
+result:
+42
+
+
+testing @ utilities.rkt:2016
+test-name:
+"single_test_1"
+
+expected-result:
+42
+
+
+running pass: allocate registers @ utilities.rkt:2027
+
+pass output:  @ utilities.rkt:2030
+(strip-has-type new-p^):
+program:
+num-root-spills:
+0
+spill-count:
+0
+locals-types:
+    v44866 : '(Vector Integer Integer), vec44867 : '(Vector Integer Integer), g44872 : 'Integer, g44873 : 'Integer, g44874 : 'Integer, tmpv44868 : 'Integer, tmpv44869 : 'Integer, _44870 : 'Void, _44871 : 'Void, 
+cfg:
+#<unweighted-graph>
+used-callee:
+(set 'r13 'r12)
+locals:
+'(_44871 _44870 vec44867 g44874 g44873 g44872 tmpv44869 tmpv44868 v44866)
+conflicts:
+#<unweighted-graph>
+start:
+    live-vars:
+(list
+ (set 'tmpv44868 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44872 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'g44874 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set))
+movq $1, %r13
+movq $2, %r12
+movq free_ptr(%rip), %r8
+movq %r8, %r9
+addq $24, %r9
+movq fromspace_end(%rip), %r8
+cmpq %r8, %r9
+jl block44875
+jmp block44876
+
+block44876:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq %r15, %rdi
+movq $24, %rsi
+callq collect
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq %r8, %r8
+movq $42, %rax
+jmp conclusion
+
+block44875:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq %r8, %r8
+movq $42, %rax
+jmp conclusion
+
+
+
+
+type-check output:  @ utilities.rkt:2035
+(strip-has-type new-p):
+program:
+num-root-spills:
+0
+spill-count:
+0
+locals-types:
+    v44866 : '(Vector Integer Integer), vec44867 : '(Vector Integer Integer), g44872 : 'Integer, g44873 : 'Integer, g44874 : 'Integer, tmpv44868 : 'Integer, tmpv44869 : 'Integer, _44870 : 'Void, _44871 : 'Void, 
+cfg:
+#<unweighted-graph>
+used-callee:
+(set 'r13 'r12)
+locals:
+'(_44871 _44870 vec44867 g44874 g44873 g44872 tmpv44869 tmpv44868 v44866)
+conflicts:
+#<unweighted-graph>
+start:
+    live-vars:
+(list
+ (set 'tmpv44868 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44872 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'g44874 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set))
+movq $1, %r13
+movq $2, %r12
+movq free_ptr(%rip), %r8
+movq %r8, %r9
+addq $24, %r9
+movq fromspace_end(%rip), %r8
+cmpq %r8, %r9
+jl block44875
+jmp block44876
+
+block44876:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq %r15, %rdi
+movq $24, %rsi
+callq collect
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq %r8, %r8
+movq $42, %rax
+jmp conclusion
+
+block44875:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq %r8, %r8
+movq $42, %rax
+jmp conclusion
+
+
+
+
+output:  @ utilities.rkt:2042
+result:
+42
+
+
+testing @ utilities.rkt:2016
+test-name:
+"single_test_1"
+
+expected-result:
+42
+
+
+running pass: patch instructions @ utilities.rkt:2027
+
+pass output:  @ utilities.rkt:2030
+(strip-has-type new-p^):
+program:
+num-root-spills:
+0
+spill-count:
+0
+locals-types:
+    v44866 : '(Vector Integer Integer), vec44867 : '(Vector Integer Integer), g44872 : 'Integer, g44873 : 'Integer, g44874 : 'Integer, tmpv44868 : 'Integer, tmpv44869 : 'Integer, _44870 : 'Void, _44871 : 'Void, 
+cfg:
+#<unweighted-graph>
+used-callee:
+(set 'r13 'r12)
+locals:
+'(_44871 _44870 vec44867 g44874 g44873 g44872 tmpv44869 tmpv44868 v44866)
+conflicts:
+#<unweighted-graph>
+start:
+    live-vars:
+(list
+ (set 'tmpv44868 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44872 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'g44874 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set))
+movq $1, %r13
+movq $2, %r12
+movq free_ptr(%rip), %r8
+movq %r8, %r9
+addq $24, %r9
+movq fromspace_end(%rip), %r8
+cmpq %r8, %r9
+jl block44875
+jmp block44876
+
+block44876:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq %r15, %rdi
+movq $24, %rsi
+callq collect
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq $42, %rax
+jmp conclusion
+
+block44875:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq $42, %rax
+jmp conclusion
+
+
+
+
+type-check output:  @ utilities.rkt:2035
+(strip-has-type new-p):
+program:
+num-root-spills:
+0
+spill-count:
+0
+locals-types:
+    v44866 : '(Vector Integer Integer), vec44867 : '(Vector Integer Integer), g44872 : 'Integer, g44873 : 'Integer, g44874 : 'Integer, tmpv44868 : 'Integer, tmpv44869 : 'Integer, _44870 : 'Void, _44871 : 'Void, 
+cfg:
+#<unweighted-graph>
+used-callee:
+(set 'r13 'r12)
+locals:
+'(_44871 _44870 vec44867 g44874 g44873 g44872 tmpv44869 tmpv44868 v44866)
+conflicts:
+#<unweighted-graph>
+start:
+    live-vars:
+(list
+ (set 'tmpv44868 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44872 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'g44874 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set))
+movq $1, %r13
+movq $2, %r12
+movq free_ptr(%rip), %r8
+movq %r8, %r9
+addq $24, %r9
+movq fromspace_end(%rip), %r8
+cmpq %r8, %r9
+jl block44875
+jmp block44876
+
+block44876:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq %r15, %rdi
+movq $24, %rsi
+callq collect
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq $42, %rax
+jmp conclusion
+
+block44875:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq $42, %rax
+jmp conclusion
+
+
+
+
+output:  @ utilities.rkt:2042
+result:
+42
+
+
+testing @ utilities.rkt:2016
+test-name:
+"single_test_1"
+
+expected-result:
+42
+
+
+running pass: prelude-and-conclusion @ utilities.rkt:2027
+
+pass output:  @ utilities.rkt:2030
+(strip-has-type new-p^):
+program:
+num-root-spills:
+0
+spill-count:
+0
+locals-types:
+    v44866 : '(Vector Integer Integer), vec44867 : '(Vector Integer Integer), g44872 : 'Integer, g44873 : 'Integer, g44874 : 'Integer, tmpv44868 : 'Integer, tmpv44869 : 'Integer, _44870 : 'Void, _44871 : 'Void, 
+cfg:
+#<unweighted-graph>
+used-callee:
+(set 'r13 'r12)
+locals:
+'(_44871 _44870 vec44867 g44874 g44873 g44872 tmpv44869 tmpv44868 v44866)
+conflicts:
+#<unweighted-graph>
+start:
+    live-vars:
+(list
+ (set 'tmpv44868 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44872 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'g44874 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set))
+movq $1, %r13
+movq $2, %r12
+movq free_ptr(%rip), %r8
+movq %r8, %r9
+addq $24, %r9
+movq fromspace_end(%rip), %r8
+cmpq %r8, %r9
+jl block44875
+jmp block44876
+
+block44876:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq %r15, %rdi
+movq $24, %rsi
+callq collect
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq $42, %rax
+jmp conclusion
+
+block44875:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq $42, %rax
+jmp conclusion
+
+main:
+    pushq %rbp
+    movq %rsp, %rbp
+    pushq %r12
+    pushq %r13
+    subq $0, %rsp
+    movq $16384, %rdi
+    movq $16384, %rsi
+    callq initialize
+    movq rootstack_begin(%rip), %r15
+    addq $0, %r15
+    jmp start
+    
+conclusion:
+    subq $0, %r15
+    addq $0, %rsp
+    popq %r13
+    popq %r12
+    popq %rbp
+    retq
+    
+
+
+
+type-check output:  @ utilities.rkt:2035
+(strip-has-type new-p):
+program:
+num-root-spills:
+0
+spill-count:
+0
+locals-types:
+    v44866 : '(Vector Integer Integer), vec44867 : '(Vector Integer Integer), g44872 : 'Integer, g44873 : 'Integer, g44874 : 'Integer, tmpv44868 : 'Integer, tmpv44869 : 'Integer, _44870 : 'Void, _44871 : 'Void, 
+cfg:
+#<unweighted-graph>
+used-callee:
+(set 'r13 'r12)
+locals:
+'(_44871 _44870 vec44867 g44874 g44873 g44872 tmpv44869 tmpv44868 v44866)
+conflicts:
+#<unweighted-graph>
+start:
+    live-vars:
+(list
+ (set 'tmpv44868 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44872 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'g44873 'g44874 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r15 'rsp)
+ (set))
+movq $1, %r13
+movq $2, %r12
+movq free_ptr(%rip), %r8
+movq %r8, %r9
+addq $24, %r9
+movq fromspace_end(%rip), %r8
+cmpq %r8, %r9
+jl block44875
+jmp block44876
+
+block44876:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rdi 'rsi 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq %r15, %rdi
+movq $24, %rsi
+callq collect
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq $42, %rax
+jmp conclusion
+
+block44875:
+    live-vars:
+(list
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp)
+ (set 'tmpv44868 'tmpv44869 'r11 'rsp)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44868 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'tmpv44869 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp 'vec44867)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq $42, %rax
+jmp conclusion
+
+main:
+    pushq %rbp
+    movq %rsp, %rbp
+    pushq %r12
+    pushq %r13
+    subq $0, %rsp
+    movq $16384, %rdi
+    movq $16384, %rsi
+    callq initialize
+    movq rootstack_begin(%rip), %r15
+    addq $0, %r15
+    jmp start
+    
+conclusion:
+    subq $0, %r15
+    addq $0, %rsp
+    popq %r13
+    popq %r12
+    popq %rbp
+    retq
+    
+
+
+
+output:  @ utilities.rkt:2042
+result:
+42
+
+
+testing @ utilities.rkt:2016
+test-name:
+"single_test_1"
+
+expected-result:
+42
+
+
+42 success(es) 0 failure(s) 0 error(s) 42 test(s) run
+0
+testing @ utilities.rkt:2077
+prog-file-name:
+"./tests/single_test_1.rkt"
+
+
+compile-file: output of type check @ utilities.rkt:2084
+tsexp:
+program:
+(let ([v (vector 1 2)])
+   42)
+
+
+compiling, running pass: shrink @ utilities.rkt:2097
+
+shrink output:  @ utilities.rkt:2101
+(strip-has-type new-p^):
+program:
+(let ([v (vector 1 2)])
+   42)
+
+
+type checking... @ utilities.rkt:2103
+
+compiling, running pass: uniquify @ utilities.rkt:2097
+
+uniquify output:  @ utilities.rkt:2101
+(strip-has-type new-p^):
+program:
+(let ([v44900 (vector 1 2)])
+   42)
+
+
+type checking... @ utilities.rkt:2103
+
+compiling, running pass: expose-allocation @ utilities.rkt:2097
+
+expose-allocation output:  @ utilities.rkt:2101
+(strip-has-type new-p^):
+program:
+(let ([v44900 (let ([tmpv44902 1])
+                 (let ([tmpv44903 2])
+                    (begin 
+                       (if (< (+ (global-value free_ptr) 24) (global-value fromspace_end))
+                          (void)
+                          (collect 24))
+                       
+                       (let ([vec44901 (allocate 2 (Vector Integer Integer))])
+                          (let ([_44904 (vector-set! vec44901 0 tmpv44902)])
+                             (let ([_44905 (vector-set! vec44901 1 tmpv44903)])
+                                vec44901))))))])
+   42)
+
+
+type checking... @ utilities.rkt:2103
+
+compiling, running pass: uncover get @ utilities.rkt:2097
+
+uncover get output:  @ utilities.rkt:2101
+(strip-has-type new-p^):
+program:
+(let ([v44900 (let ([tmpv44902 1])
+                 (let ([tmpv44903 2])
+                    (begin 
+                       (if (< (+ (global-value free_ptr) 24) (global-value fromspace_end))
+                          (void)
+                          (collect 24))
+                       
+                       (let ([vec44901 (allocate 2 (Vector Integer Integer))])
+                          (let ([_44904 (vector-set! vec44901 0 tmpv44902)])
+                             (let ([_44905 (vector-set! vec44901 1 tmpv44903)])
+                                vec44901))))))])
+   42)
+
+
+type checking... @ utilities.rkt:2103
+
+compiling, running pass: remove complex opera* @ utilities.rkt:2097
+
+remove complex opera* output:  @ utilities.rkt:2101
+(strip-has-type new-p^):
+program:
+(let ([v44900 (let ([tmpv44902 1])
+                 (let ([tmpv44903 2])
+                    (begin 
+                       (if (let ([g44906 (global-value free_ptr)])
+                              (let ([g44907 (+ g44906 24)])
+                                 (let ([g44908 (global-value fromspace_end)])
+                                    (< g44907 g44908))))
+                          (void)
+                          (collect 24))
+                       
+                       (let ([vec44901 (allocate 2 (Vector Integer Integer))])
+                          (let ([_44904 (vector-set! vec44901 0 tmpv44902)])
+                             (let ([_44905 (vector-set! vec44901 1 tmpv44903)])
+                                vec44901))))))])
+   42)
+
+
+type checking... @ utilities.rkt:2103
+
+compiling, running pass: explicate control @ utilities.rkt:2097
+
+explicate control output:  @ utilities.rkt:2101
+(strip-has-type new-p^):
+program:
+locals:
+'(_44905 _44904 vec44901 g44908 g44907 g44906 tmpv44903 tmpv44902 v44900)
+start:
+    tmpv44902 = 1;
+    tmpv44903 = 2;
+    g44906 = (global-value free_ptr);
+    g44907 = (+ g44906 24);
+    g44908 = (global-value fromspace_end);
+    if (< g44907 g44908)
+       goto block44909;
+    else
+       goto block44910;
+block44910:
+    (collect 24)
+    vec44901 = (allocate 2 (Vector Integer Integer));
+    _44904 = (vector-set! vec44901 0 tmpv44902);
+    _44905 = (vector-set! vec44901 1 tmpv44903);
+    v44900 = vec44901;
+    return 42;
+block44909:
+    vec44901 = (allocate 2 (Vector Integer Integer));
+    _44904 = (vector-set! vec44901 0 tmpv44902);
+    _44905 = (vector-set! vec44901 1 tmpv44903);
+    v44900 = vec44901;
+    return 42;
+
+
+
+type checking... @ utilities.rkt:2103
+
+compiling, running pass: instruction selection @ utilities.rkt:2097
+
+instruction selection output:  @ utilities.rkt:2101
+(strip-has-type new-p^):
+program:
+locals:
+'(_44905 _44904 vec44901 g44908 g44907 g44906 tmpv44903 tmpv44902 v44900)
+locals-types:
+    g44908 : 'Integer, _44904 : 'Void, _44905 : 'Void, g44906 : 'Integer, g44907 : 'Integer, v44900 : '(Vector
+                                                                                                        Integer
+                                                                                                        Integer), vec44901 : '(Vector
+                                                                                                                               Integer
+                                                                                                                               Integer), tmpv44902 : 'Integer, tmpv44903 : 'Integer, 
+start:
+    movq $1, tmpv44902
+    movq $2, tmpv44903
+    movq free_ptr(%rip), g44906
+    movq g44906, g44907
+    addq $24, g44907
+    movq fromspace_end(%rip), g44908
+    cmpq g44908, g44907
+    jl block44909
+    jmp block44910
+    
+block44910:
+    movq %r15, %rdi
+    movq $24, %rsi
+    callq collect
+    movq free_ptr(%rip), %r11
+    addq $24, free_ptr(%rip)
+    movq $5, 0(%r11)
+    movq %r11, vec44901
+    movq vec44901, %r11
+    movq tmpv44902, 8(%r11)
+    movq $0, _44904
+    movq vec44901, %r11
+    movq tmpv44903, 16(%r11)
+    movq $0, _44905
+    movq vec44901, v44900
+    movq $42, %rax
+    jmp conclusion
+    
+block44909:
+    movq free_ptr(%rip), %r11
+    addq $24, free_ptr(%rip)
+    movq $5, 0(%r11)
+    movq %r11, vec44901
+    movq vec44901, %r11
+    movq tmpv44902, 8(%r11)
+    movq $0, _44904
+    movq vec44901, %r11
+    movq tmpv44903, 16(%r11)
+    movq $0, _44905
+    movq vec44901, v44900
+    movq $42, %rax
+    jmp conclusion
+    
+
+
+
+compiling, running pass: build cfg @ utilities.rkt:2097
+
+build cfg output:  @ utilities.rkt:2101
+(strip-has-type new-p^):
+program:
+locals:
+'(_44905 _44904 vec44901 g44908 g44907 g44906 tmpv44903 tmpv44902 v44900)
+locals-types:
+    g44908 : 'Integer, _44904 : 'Void, _44905 : 'Void, g44906 : 'Integer, g44907 : 'Integer, v44900 : '(Vector
+                                                                                                        Integer
+                                                                                                        Integer), vec44901 : '(Vector
+                                                                                                                               Integer
+                                                                                                                               Integer), tmpv44902 : 'Integer, tmpv44903 : 'Integer, 
+cfg:
+#<unweighted-graph>
+start:
+    movq $1, tmpv44902
+    movq $2, tmpv44903
+    movq free_ptr(%rip), g44906
+    movq g44906, g44907
+    addq $24, g44907
+    movq fromspace_end(%rip), g44908
+    cmpq g44908, g44907
+    jl block44909
+    jmp block44910
+    
+block44910:
+    movq %r15, %rdi
+    movq $24, %rsi
+    callq collect
+    movq free_ptr(%rip), %r11
+    addq $24, free_ptr(%rip)
+    movq $5, 0(%r11)
+    movq %r11, vec44901
+    movq vec44901, %r11
+    movq tmpv44902, 8(%r11)
+    movq $0, _44904
+    movq vec44901, %r11
+    movq tmpv44903, 16(%r11)
+    movq $0, _44905
+    movq vec44901, v44900
+    movq $42, %rax
+    jmp conclusion
+    
+block44909:
+    movq free_ptr(%rip), %r11
+    addq $24, free_ptr(%rip)
+    movq $5, 0(%r11)
+    movq %r11, vec44901
+    movq vec44901, %r11
+    movq tmpv44902, 8(%r11)
+    movq $0, _44904
+    movq vec44901, %r11
+    movq tmpv44903, 16(%r11)
+    movq $0, _44905
+    movq vec44901, v44900
+    movq $42, %rax
+    jmp conclusion
+    
+
+
+
+compiling, running pass: uncover live @ utilities.rkt:2097
+
+uncover live output:  @ utilities.rkt:2101
+(strip-has-type new-p^):
+program:
+locals:
+'(_44905 _44904 vec44901 g44908 g44907 g44906 tmpv44903 tmpv44902 v44900)
+locals-types:
+    g44908 : 'Integer, _44904 : 'Void, _44905 : 'Void, g44906 : 'Integer, g44907 : 'Integer, v44900 : '(Vector
+                                                                                                        Integer
+                                                                                                        Integer), vec44901 : '(Vector
+                                                                                                                               Integer
+                                                                                                                               Integer), tmpv44902 : 'Integer, tmpv44903 : 'Integer, 
+cfg:
+#<unweighted-graph>
+start:
+    live-vars:
+(list
+ (set 'tmpv44902 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44906 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44907 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44907 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44907 'g44908 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r15 'rsp)
+ (set))
+movq $1, tmpv44902
+movq $2, tmpv44903
+movq free_ptr(%rip), g44906
+movq g44906, g44907
+addq $24, g44907
+movq fromspace_end(%rip), g44908
+cmpq g44908, g44907
+jl block44909
+jmp block44910
+
+block44910:
+    live-vars:
+(list
+ (set 'tmpv44903 'rsp 'rdi 'tmpv44902)
+ (set 'tmpv44903 'rsi 'rsp 'rdi 'tmpv44902)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r11 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq %r15, %rdi
+movq $24, %rsi
+callq collect
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, vec44901
+movq vec44901, %r11
+movq tmpv44902, 8(%r11)
+movq $0, _44904
+movq vec44901, %r11
+movq tmpv44903, 16(%r11)
+movq $0, _44905
+movq vec44901, v44900
+movq $42, %rax
+jmp conclusion
+
+block44909:
+    live-vars:
+(list
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r11 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, vec44901
+movq vec44901, %r11
+movq tmpv44902, 8(%r11)
+movq $0, _44904
+movq vec44901, %r11
+movq tmpv44903, 16(%r11)
+movq $0, _44905
+movq vec44901, v44900
+movq $42, %rax
+jmp conclusion
+
+
+
+
+compiling, running pass: build interference graph @ utilities.rkt:2097
+
+build interference graph output:  @ utilities.rkt:2101
+(strip-has-type new-p^):
+program:
+locals-types:
+    g44908 : 'Integer, _44904 : 'Void, _44905 : 'Void, g44906 : 'Integer, g44907 : 'Integer, v44900 : '(Vector
+                                                                                                        Integer
+                                                                                                        Integer), vec44901 : '(Vector
+                                                                                                                               Integer
+                                                                                                                               Integer), tmpv44902 : 'Integer, tmpv44903 : 'Integer, 
+cfg:
+#<unweighted-graph>
+locals:
+'(_44905 _44904 vec44901 g44908 g44907 g44906 tmpv44903 tmpv44902 v44900)
+conflicts:
+#<unweighted-graph>
+start:
+    live-vars:
+(list
+ (set 'tmpv44902 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44906 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44907 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44907 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44907 'g44908 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r15 'rsp)
+ (set))
+movq $1, tmpv44902
+movq $2, tmpv44903
+movq free_ptr(%rip), g44906
+movq g44906, g44907
+addq $24, g44907
+movq fromspace_end(%rip), g44908
+cmpq g44908, g44907
+jl block44909
+jmp block44910
+
+block44910:
+    live-vars:
+(list
+ (set 'tmpv44903 'rsp 'rdi 'tmpv44902)
+ (set 'tmpv44903 'rsi 'rsp 'rdi 'tmpv44902)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r11 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq %r15, %rdi
+movq $24, %rsi
+callq collect
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, vec44901
+movq vec44901, %r11
+movq tmpv44902, 8(%r11)
+movq $0, _44904
+movq vec44901, %r11
+movq tmpv44903, 16(%r11)
+movq $0, _44905
+movq vec44901, v44900
+movq $42, %rax
+jmp conclusion
+
+block44909:
+    live-vars:
+(list
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r11 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, vec44901
+movq vec44901, %r11
+movq tmpv44902, 8(%r11)
+movq $0, _44904
+movq vec44901, %r11
+movq tmpv44903, 16(%r11)
+movq $0, _44905
+movq vec44901, v44900
+movq $42, %rax
+jmp conclusion
+
+
+
+
+compiling, running pass: allocate registers @ utilities.rkt:2097
+
+allocate registers output:  @ utilities.rkt:2101
+(strip-has-type new-p^):
+program:
+num-root-spills:
+0
+spill-count:
+0
+locals-types:
+    g44908 : 'Integer, _44904 : 'Void, _44905 : 'Void, g44906 : 'Integer, g44907 : 'Integer, v44900 : '(Vector
+                                                                                                        Integer
+                                                                                                        Integer), vec44901 : '(Vector
+                                                                                                                               Integer
+                                                                                                                               Integer), tmpv44902 : 'Integer, tmpv44903 : 'Integer, 
+cfg:
+#<unweighted-graph>
+used-callee:
+(set 'r13 'r12)
+locals:
+'(_44905 _44904 vec44901 g44908 g44907 g44906 tmpv44903 tmpv44902 v44900)
+conflicts:
+#<unweighted-graph>
+start:
+    live-vars:
+(list
+ (set 'tmpv44902 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44906 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44907 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44907 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44907 'g44908 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r15 'rsp)
+ (set))
+movq $1, %r13
+movq $2, %r12
+movq free_ptr(%rip), %r8
+movq %r8, %r9
+addq $24, %r9
+movq fromspace_end(%rip), %r8
+cmpq %r8, %r9
+jl block44909
+jmp block44910
+
+block44910:
+    live-vars:
+(list
+ (set 'tmpv44903 'rsp 'rdi 'tmpv44902)
+ (set 'tmpv44903 'rsi 'rsp 'rdi 'tmpv44902)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r11 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq %r15, %rdi
+movq $24, %rsi
+callq collect
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq %r8, %r8
+movq $42, %rax
+jmp conclusion
+
+block44909:
+    live-vars:
+(list
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r11 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq %r8, %r8
+movq $42, %rax
+jmp conclusion
+
+
+
+
+compiling, running pass: patch instructions @ utilities.rkt:2097
+
+patch instructions output:  @ utilities.rkt:2101
+(strip-has-type new-p^):
+program:
+num-root-spills:
+0
+spill-count:
+0
+locals-types:
+    g44908 : 'Integer, _44904 : 'Void, _44905 : 'Void, g44906 : 'Integer, g44907 : 'Integer, v44900 : '(Vector
+                                                                                                        Integer
+                                                                                                        Integer), vec44901 : '(Vector
+                                                                                                                               Integer
+                                                                                                                               Integer), tmpv44902 : 'Integer, tmpv44903 : 'Integer, 
+cfg:
+#<unweighted-graph>
+used-callee:
+(set 'r13 'r12)
+locals:
+'(_44905 _44904 vec44901 g44908 g44907 g44906 tmpv44903 tmpv44902 v44900)
+conflicts:
+#<unweighted-graph>
+start:
+    live-vars:
+(list
+ (set 'tmpv44902 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44906 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44907 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44907 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44907 'g44908 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r15 'rsp)
+ (set))
+movq $1, %r13
+movq $2, %r12
+movq free_ptr(%rip), %r8
+movq %r8, %r9
+addq $24, %r9
+movq fromspace_end(%rip), %r8
+cmpq %r8, %r9
+jl block44909
+jmp block44910
+
+block44910:
+    live-vars:
+(list
+ (set 'tmpv44903 'rsp 'rdi 'tmpv44902)
+ (set 'tmpv44903 'rsi 'rsp 'rdi 'tmpv44902)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r11 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq %r15, %rdi
+movq $24, %rsi
+callq collect
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq $42, %rax
+jmp conclusion
+
+block44909:
+    live-vars:
+(list
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r11 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq $42, %rax
+jmp conclusion
+
+
+
+
+compiling, running pass: prelude-and-conclusion @ utilities.rkt:2097
+
+prelude-and-conclusion output:  @ utilities.rkt:2101
+(strip-has-type new-p^):
+program:
+num-root-spills:
+0
+spill-count:
+0
+locals-types:
+    g44908 : 'Integer, _44904 : 'Void, _44905 : 'Void, g44906 : 'Integer, g44907 : 'Integer, v44900 : '(Vector
+                                                                                                        Integer
+                                                                                                        Integer), vec44901 : '(Vector
+                                                                                                                               Integer
+                                                                                                                               Integer), tmpv44902 : 'Integer, tmpv44903 : 'Integer, 
+cfg:
+#<unweighted-graph>
+used-callee:
+(set 'r13 'r12)
+locals:
+'(_44905 _44904 vec44901 g44908 g44907 g44906 tmpv44903 tmpv44902 v44900)
+conflicts:
+#<unweighted-graph>
+start:
+    live-vars:
+(list
+ (set 'tmpv44902 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44906 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44907 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44907 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'g44907 'g44908 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r15 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r15 'rsp)
+ (set))
+movq $1, %r13
+movq $2, %r12
+movq free_ptr(%rip), %r8
+movq %r8, %r9
+addq $24, %r9
+movq fromspace_end(%rip), %r8
+cmpq %r8, %r9
+jl block44909
+jmp block44910
+
+block44910:
+    live-vars:
+(list
+ (set 'tmpv44903 'rsp 'rdi 'tmpv44902)
+ (set 'tmpv44903 'rsi 'rsp 'rdi 'tmpv44902)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r11 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq %r15, %rdi
+movq $24, %rsi
+callq collect
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq $42, %rax
+jmp conclusion
+
+block44909:
+    live-vars:
+(list
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'rsp)
+ (set 'tmpv44902 'tmpv44903 'r11 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44902 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'tmpv44903 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'vec44901 'rsp)
+ (set 'rsp)
+ (set 'rax 'rsp)
+ (set))
+movq free_ptr(%rip), %r11
+addq $24, free_ptr(%rip)
+movq $5, 0(%r11)
+movq %r11, %r8
+movq %r8, %r11
+movq %r13, 8(%r11)
+movq $0, %r9
+movq %r8, %r11
+movq %r12, 16(%r11)
+movq $0, %r9
+movq $42, %rax
+jmp conclusion
+
+main:
+    pushq %rbp
+    movq %rsp, %rbp
+    pushq %r12
+    pushq %r13
+    subq $0, %rsp
+    movq $16384, %rdi
+    movq $16384, %rsi
+    callq initialize
+    movq rootstack_begin(%rip), %r15
+    addq $0, %r15
+    jmp start
+    
+conclusion:
+    subq $0, %r15
+    addq $0, %rsp
+    popq %r13
+    popq %r12
+    popq %rbp
+    retq
+    
+
+
+
+x86 output:
+	.align 8
+start:
+	movq	$1, %r13
+	movq	$2, %r12
+	movq	free_ptr(%rip), %r8
+	movq	%r8, %r9
+	addq	$24, %r9
+	movq	fromspace_end(%rip), %r8
+	cmpq	%r8, %r9
+	jl block44909
+	jmp block44910
+
+	.align 8
+block44910:
+	movq	%r15, %rdi
+	movq	$24, %rsi
+	callq	collect
+	movq	free_ptr(%rip), %r11
+	addq	$24, free_ptr(%rip)
+	movq	$5, 0(%r11)
+	movq	%r11, %r8
+	movq	%r8, %r11
+	movq	%r13, 8(%r11)
+	movq	$0, %r9
+	movq	%r8, %r11
+	movq	%r12, 16(%r11)
+	movq	$0, %r9
+	movq	$42, %rax
+	jmp conclusion
+
+	.align 8
+block44909:
+	movq	free_ptr(%rip), %r11
+	addq	$24, free_ptr(%rip)
+	movq	$5, 0(%r11)
+	movq	%r11, %r8
+	movq	%r8, %r11
+	movq	%r13, 8(%r11)
+	movq	$0, %r9
+	movq	%r8, %r11
+	movq	%r12, 16(%r11)
+	movq	$0, %r9
+	movq	$42, %rax
+	jmp conclusion
+
+	.globl main
+	.align 8
+main:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	pushq	%r12
+	pushq	%r13
+	subq	$0, %rsp
+	movq	$16384, %rdi
+	movq	$16384, %rsi
+	callq	initialize
+	movq	rootstack_begin(%rip), %r15
+	addq	$0, %r15
+	jmp start
+
+	.align 8
+conclusion:
+	subq	$0, %r15
+	addq	$0, %rsp
+	popq	%r13
+	popq	%r12
+	popq	%rbp
+	retq
+
+
+1 success(es) 0 failure(s) 0 error(s) 1 test(s) run
+0

@@ -108,7 +108,7 @@
         ; (set! used-callee (set-add used-callee (dict-ref num-to-reg v)))
         ]
        [#f
-        (dict-set! color-map k (Deref 'rbp (- (* (- 8) (- v 11)) (* 8 (set-count used-callee))))) 
+        (dict-set! color-map k (Deref 'rbp (- (* (- 8) (- v 11)) (* 8 (set-count used-callee)))))
         (set! spill-count (+ spill-count 1))])))
   (values color-map spill-count (set-intersect callee-save used-callee)))
 
