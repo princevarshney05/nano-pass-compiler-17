@@ -7,7 +7,7 @@
 (require "interp.rkt")
 (require "compiler.rkt")
 (require "type-check-Lfun.rkt")
-;;; (debug-level 1)
+; (debug-level 1)
 ;;; (AST-output-syntax 'concrete-syntax)
 
 ;; all the files in the tests/ directory with extension ".rkt".
@@ -29,12 +29,13 @@
 (interp-tests "cond" type-check-Lfun compiler-passes interp-Lfun "cond_test" (tests-for "cond"))
 (interp-tests "my" type-check-Lfun compiler-passes interp-Lfun "my_test" (tests-for "my"))
 (interp-tests "while" type-check-Lfun compiler-passes interp-Lfun "while_test" (tests-for "while"))
+(interp-tests "loop" type-check-Lfun compiler-passes interp-Lfun "loop_test" (tests-for "loop"))
 (interp-tests "vectors" type-check-Lfun compiler-passes interp-Lfun "vectors_test" (tests-for "vectors"))
 (interp-tests "functions" type-check-Lfun compiler-passes interp-Lfun "functions_test" (tests-for "functions"))
 
-; Single Interp test
+; ; Single Interp test
 (interp-tests "single" type-check-Lfun compiler-passes interp-Lfun "single_test" (tests-for "single"))
-; Single Compiler test
+; ; Single Compiler test
 (compiler-tests "single" type-check-Lfun compiler-passes "single_test" (tests-for "single"))
 
 ; Uncomment the following when all the passes are complete to
@@ -43,6 +44,7 @@
 (compiler-tests "my" type-check-Lfun compiler-passes "my_test" (tests-for "my"))
 (compiler-tests "cond" type-check-Lfun compiler-passes "cond_test" (tests-for "cond"))
 (compiler-tests "while" type-check-Lfun compiler-passes "while_test" (tests-for "while"))
+(compiler-tests "loop" type-check-Lfun compiler-passes "loop_test" (tests-for "loop"))
 (compiler-tests "vectors" type-check-Lfun compiler-passes "vectors_test" (tests-for "vectors"))
 (compiler-tests "functions" type-check-Lfun compiler-passes "functions_test" (tests-for "functions"))
 
